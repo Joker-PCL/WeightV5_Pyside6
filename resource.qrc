@@ -1,0 +1,24 @@
+<RCC>
+  <qresource>
+    <file>assets/keyboard/backspace.png</file>
+    <file>assets/keyboard/cancel.png</file>
+    <file>assets/keyboard/enter.png</file>
+    <file>assets/keyboard/record.png</file>
+    <file>assets/gif/connecting.gif</file>
+    <file>assets/icon/characteristics.png</file>
+    <file>assets/icon/developer.png</file>
+    <file>assets/icon/exit.png</file>
+    <file>assets/icon/home.png</file>
+    <file>assets/icon/manual_1.png</file>
+    <file>assets/icon/picture_default.png</file>
+    <file>assets/icon/menu.png</file>
+    <file>assets/icon/menu_open.png</file>
+    <file>assets/icon/settings.png</file>
+    <file>assets/icon/summary.png</file>
+    <file>assets/icon/thickness.png</file>
+    <file>assets/icon/logout.png</file>
+    <file>assets/icon/weighing.png</file>
+    <file>assets/images/polipharm.png</file>
+    <file>assets/images/scale.png</file>
+  </qresource>
+</RCC>
