@@ -1,5 +1,9 @@
 <RCC>
   <qresource>
+    <file>assets/icon/no-wifi.png</file>
+    <file>assets/icon/signal1.png</file>
+    <file>assets/icon/signal2.png</file>
+    <file>assets/icon/signal3.png</file>
     <file>assets/keyboard/backspace.png</file>
     <file>assets/keyboard/cancel.png</file>
     <file>assets/keyboard/enter.png</file>

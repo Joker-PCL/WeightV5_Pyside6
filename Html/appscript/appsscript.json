@@ -1,0 +1,22 @@
+{
+  "timeZone": "America/New_York",
+  "dependencies": {},
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE_ANONYMOUS"
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "sheets": {
+    "macros": [
+      {
+        "menuName": "มาโครไม่มีชื่อ",
+        "functionName": "myFunction"
+      },
+      {
+        "menuName": "มาโครไม่มีชื่อ",
+        "functionName": "myFunction"
+      }
+    ]
+  }
+}

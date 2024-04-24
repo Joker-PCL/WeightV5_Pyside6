@@ -18,7 +18,7 @@ class ShowDateTime():
             
     def print(self):
         now = datetime.now() # current date and time
-        curr_date = now.strftime("%m/%d/%Y")
+        curr_date = now.strftime("%d/%m/%Y")
         curr_time = now.strftime("%H:%M:%S")
         self.date_bar.setText(curr_date)
         self.time_bar.setText(curr_time)

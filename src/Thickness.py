@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QApplication
 from src.Alert import Alert
-import json
 
 class Thickness():
     def __init__(self, window):
