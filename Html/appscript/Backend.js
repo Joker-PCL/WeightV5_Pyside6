@@ -1,82 +1,8 @@
-// ดึงข้อมูลชีตทั้งหมดที่อยู่ในฐานข้อมูล สร้าง dropdown list
-function getProductionList(jsonWebToken, nameTH) {
-  const verify_token = validateToken(jsonWebToken, nameTH);
-
-  if (verify_token.message != "success") {
-    return verify_token;
-  }
-  else {
-    let folderId10s = globalVariables().folderId10s;
-    let folder10s = DriveApp.getFolderById(folderId10s);
-    let contents10s = folder10s.getFiles();
-
-    let folderIdIPC = globalVariables().folderIdIPC;
-    let folderIPC = DriveApp.getFolderById(folderIdIPC);
-    let contentsIPC = folderIPC.getFiles();
-
-    let sheetLists10s = [];
-    let sheetListsIPC = [];
-
-    const fileType = "application/vnd.google-apps.spreadsheet";
-    if (verify_token.token.data.role != "Operator") {
-      while (contentsIPC.hasNext()) {
-        let file = contentsIPC.next();
-        if (file.getMimeType() === fileType) {
-          const tablet_name = file.getName().toUpperCase();
-          const tablet_url_10s = file.getUrl();
-          sheetListsIPC.push([tablet_name, tablet_url_10s]);
-        };
-      };
-
-      while (contents10s.hasNext()) {
-        let file = contents10s.next();
-        if (file.getMimeType() === fileType) {
-          const tablet_name = file.getName().toUpperCase();
-          const tablet_url_ipc = file.getUrl();
-          sheetLists10s.push([tablet_name, tablet_url_ipc]);
-        };
-      };
-    };
-
-    // จัดเรียงข้อมูลตามวันที่
-    sheetLists10s = sheetLists10s.sort((item1, item2) => {
-      const date1Parts = item1[0].split('_').pop().split('/');
-      const date2Parts = item2[0].split('_').pop().split('/');
-      const date1 = new Date(`${date1Parts[2]}-${date1Parts[1]}-${date1Parts[0]}`);
-      const date2 = new Date(`${date2Parts[2]}-${date2Parts[1]}-${date2Parts[0]}`);
-      return date1 - date2;
-    });
-
-    // จัดเรียงข้อมูลตามวันที่
-    sheetListsIPC = sheetListsIPC.sort((item1, item2) => {
-      const date1Parts = item1[0].split('_').pop().split('/');
-      const date2Parts = item2[0].split('_').pop().split('/');
-      const date1 = new Date(`${date1Parts[2]}-${date1Parts[1]}-${date1Parts[0]}`);
-      const date2 = new Date(`${date2Parts[2]}-${date2Parts[1]}-${date2Parts[0]}`);
-      return date1 - date2;
-    });
-
-    let ssMain = SpreadsheetApp.getActiveSpreadsheet();
-    let shTabetList = ssMain.getSheetByName(globalVariables().shTabetList);
-
-    let dataLists = shTabetList.getDataRange().getDisplayValues().slice(1);
-    dataLists.reverse().forEach(data => {
-      const tablet_name = data[0].toUpperCase();
-      const tablet_url_10s = data[3];
-      const tablet_url_ipc = data[5];
-      sheetLists10s.push([`เครื่องตอก ${tablet_name} (LOT. ปัจจุบัน)`, tablet_url_10s]);
-      sheetListsIPC.push([`เครื่องตอก ${tablet_name} (LOT. ปัจจุบัน)`, tablet_url_ipc])
-    });
-
-    return { message: "success", sheetLists10s, sheetListsIPC };
-  }
-}
-
 // ดึงข้อมูล Main_Setup สำหรับการตั้งค่าทั้งหมด
 function getDataSetting() {
-  const verify_token = validateToken();
+  const verifyToken = validateToken();
 
-  if (verify_token.message !== "success") {
+  if (verifyToken.message !== "success") {
     return;
   }
   else {
@@ -196,7 +122,7 @@ function getSheetUrl(tabletID) {
 
 // ดึงข้อมูล Audit_trail รายละเอียดการปฏิบัติงาน
 function getAuditTrail_data() {
-  const verifyToken = validateToken();
+  const verifyToken = verifyToken();
   if (verifyToken.message === "success") {
     let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = spreadsheet.getSheetByName(globalVariables().shAudit_log);

@@ -1,67 +1,5 @@
 <script>
   // ข้อมูลการชั่ง 10 เม็ด
-  const dataUpdate = {
-    settingDetail: {
-      productName: "ASCOT 88888",
-      lot: "32219R",
-      balanceID: "PI-229",
-      tabletID: "T11",
-      meanWeight: "0.98",
-      percentWeightVariation: "3.00%",
-      meanWeightMin: "0.96",
-      meanWeightMax: "1.00",
-      meanWeightRegMin: "0.89",
-      meanWeightRegMax: "1.07",
-      thicknessMin: "2.50",
-      thicknessMax: "2.90",
-      prepared: "อรทัย",
-      approved: "xxxxx",
-      finished: "xxxxx",
-      finishTime: "xxxxx",
-    },
-
-    // ข้อมูลการชั่งน้ำหนัก 10 เม็ด
-    weighing: {
-      dataset: {
-        "01/02/2024, 19:57:58": {
-          type: "ONLINE",
-          weight1: "0.959",
-          weight2: "1.001",
-          characteristics: "ผิดปกติ",
-          operator: "สะกุณา",
-          inspector: "ชิตชนก",
-          thickness: {
-            thickness1: "2.80",
-            thickness2: "2.75",
-            thickness3: "2.49",
-            thickness4: "2.76",
-            thickness5: "3.80",
-            thickness6: "2.75",
-            thickness7: "2.79",
-            thickness8: "2.76",
-            thickness9: "2.91",
-            thickness10: "2.78",
-          },
-        },
-      },
-    },
-
-    // Remarks
-    remarks: {
-      dataset: {
-        "01/02/2024, 12:55:49": {
-          issues: "[แจ้งเตือนจากระบบ]\n เหตุการที่เกิดการเปลี่ยนแปลง",
-          cause: "ทดสอบ, สาเหตุ",
-          resolve: "ทดสอบ, การแก้ไข",
-          notes: "ทดสอบ, หมายเหตุ",
-          recorder: "ทดสอบ, ผู้บันทึก",
-          role: "Admin",
-        },
-      },
-    },
-  };
-
-  // ข้อมูลการชั่ง 10 เม็ด
   const datatest = {
     settingDetail: {
       productName: "ASCOT 81",
@@ -83,8 +21,7 @@
     },
 
     // ข้อมูลการชั่งน้ำหนัก 10 เม็ด
-    weighing: {
-      dataset: {
+    weighingData: {
         "01/02/2024, 19:57:58": {
           type: "ONLINE",
           weight1: "0.959",
@@ -105,12 +42,10 @@
             thickness10: "2.78",
           },
         },
-      },
     },
 
     // Remarks
-    remarks: {
-      dataset: {
+    remarksData: {
         "01/02/2024, 12:55:49": {
           issues: "ทดสอบ,เหตุการที่เกิดการเปลี่ยนแปลง",
           cause: "ทดสอบ, สาเหตุ",
@@ -130,7 +65,6 @@
           role: "Superuser",
         },
       },
-    },
   };
 
   // ข้อมูลการชั่ง ipc

@@ -9,11 +9,6 @@
 
 <!-- คลาสที่ใช้ร่วมกัน -->
 <script>
-  // จัดเรียงข้อมูล DataTable ตามวันที่มากไปน้อย
-  $(document).ready(function () {
-    DataTable.datetime("DD/MM/YYYY, HH:mm:ss");
-  });
-
   // สร้างรายการเมนู Sidebar parameters(สิทธิ์การใช้งาน)
   class CreateSidebarMenu {
     constructor(role) {
@@ -341,16 +336,14 @@
     }
 
     createChart() {
-      const dataPoints = Object.entries(this.dataSource).map(
-        ([timestamp, rowData]) => {
-          const weights_cache = [rowData["weight1"], rowData["weight2"]];
-          const average =
-            weights_cache.reduce((a, b) => parseFloat(a) + parseFloat(b)) /
-            weights_cache.length;
-          const percent = (average / this.meanWeight) * 100;
-          return { y: parseFloat(percent), label: timestamp };
-        }
-      );
+      const dataPoints = this.dataSource.map((rowData) => {
+        const weights_cache = [rowData["weight1"], rowData["weight2"]];
+        const average =
+          weights_cache.reduce((a, b) => parseFloat(a) + parseFloat(b)) /
+          weights_cache.length;
+        const percent = (average / this.meanWeight) * 100;
+        return { y: parseFloat(percent), label: rowData.timestamp };
+      });
 
       $(document).ready(function () {
         const chart = new CanvasJS.Chart(`chart_10s`, {
@@ -421,8 +414,8 @@
       this.listsMenuInput = this.listsMenu.input;
       this.main_container.appendChild(this.viewWeighingMenu);
 
-      this.productionLists = {};  // รายการผลิตทั้งหมด
-      this.currentListname = "";  // รายการผลิตที่เลือก
+      this.productionLists = []; // รายการผลิตทั้งหมด
+      this.currentListname = ""; // รายการผลิตที่เลือก
       this.url = ""; // url ไฟล์
 
       // สร้างฟอร์มสำหรับบันทึกข้อมูล Remarks
@@ -439,14 +432,13 @@
     }
 
     searchUrl(currentListname) {
-      const result = Object.entries(this.productionLists).find(
-        ([_listName, url]) => {
-          return _listName == currentListname;
+      const result = this.productionLists.find((lists) => {
+          return lists.name == currentListname;
         }
       );
 
       if (result) {
-        return result[1];
+        return result.url;
       } else {
         return null;
       }
@@ -458,8 +450,8 @@
 
       const dataSource = [];
 
-      Object.entries(this.productionLists).forEach(([name, url]) => {
-        dataSource.push(name);
+      this.productionLists.forEach((lists) => {
+        dataSource.push(lists.name);
       });
 
       $(this.listsMenuInput)
@@ -485,17 +477,16 @@
     loadWeighingData() {
       loadingPage("show");
       this.url = this.searchUrl(this.currentListname);
-      
-      setTimeout(
-        function () {
+
+      google.script.run
+        .withSuccessHandler((dataList) => {
           loadingPage("hide");
           SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-          this.render(dataUpdate);
-        }.bind(this),
-        2500
-      );
+          this.render(dataList);
+        })
+        .getWeighingData_10s(this.url);
     }
-    
+
     // จบการผลิต
     endOfProduction() {
       loadingEdit("show");
@@ -531,10 +522,10 @@
         function () {
           const firstRow = this.weighingTable.row(0);
           const rowData = firstRow.data();
-          rowData[8] = "ยิ่งลักษณ์"; // ลงชื่อผู้ตรวจสอบ
           loadingEdit("hide");
-
-          if (!rowData[8]) {
+          console.log(rowData[8]);
+          if (rowData[8] === "-") {
+            rowData[8] = "ยิ่งลักษณ์"; // ลงชื่อผู้ตรวจสอบ
             SwalMiniAlert.fire({ title: "ลงชื่อผู้ตรวจสอบเรียบร้อยแล้ว" });
             const node = this.weighingTable
               .row(0)
@@ -597,6 +588,7 @@
 
     // แสดงหน้าชั่งน้ำหนัก
     render(data) {
+      console.log(data);
       this.settingDetail = data.settingDetail;
       this.productName = this.settingDetail.productName;
       this.lot = this.settingDetail.lot;
@@ -615,8 +607,8 @@
       this.finished = this.settingDetail.finished;
       this.finishTime = this.settingDetail.finishTime;
 
-      this.weighingData = data.weighing.dataset;
-      this.remarksData = data.remarks.dataset;
+      this.weighingData = data.weighingData;
+      this.remarksData = data.remarksData;
 
       if (this.container.innerHTML != "") {
         $(this.container).hide();
@@ -675,8 +667,9 @@
 
       // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
       if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
+        (this.role === role_definition.Admin ||
+        this.role === role_definition.Superuser) &&
+        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         $(document).ready(() => {
           $(this.remarks_tbody).on(
@@ -730,19 +723,24 @@
       title.innerHTML = "รายละเอียดการตั้งค่า";
       settings_container.appendChild(title);
 
-      // Method, ปุ่มอัพเดทข้อมูล
+      // ปุ่มอัพเดทข้อมูล, ปุ่มจบการผลิต
       const buttonEl = document.createElement("div");
       buttonEl.classList.add("detail-buttons-group");
-      this.buttonUpdate = document.createElement("button");
-      this.buttonUpdate.id = "button_update_10s";
-      this.buttonUpdate.classList.add("btn", "btn-secondary", "button-update");
-      this.buttonUpdate.textContent = "อัพเดทข้อมูล";
-      buttonEl.appendChild(this.buttonUpdate);
 
-      // Method, ปุ่มจบการผลิต
+      // ปุ่มอัพเดทข้อมูล
+      if(this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1) {
+        this.buttonUpdate = document.createElement("button");
+        this.buttonUpdate.id = "button_update_10s";
+        this.buttonUpdate.classList.add("btn", "btn-secondary", "button-update");
+        this.buttonUpdate.textContent = "อัพเดทข้อมูล";
+        buttonEl.appendChild(this.buttonUpdate);
+      }
+
+      // ปุ่มจบการผลิต
       if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
+        (this.role === role_definition.Admin ||
+        this.role === role_definition.Superuser) &&
+        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         if (this.prepared != "xxxxx" && this.approved != "xxxxx") {
           this.buttonFinished = document.createElement("button");
@@ -831,7 +829,7 @@
       detail_container.appendChild(settings_container);
       container.appendChild(detail_container);
 
-      // Method, ปุ่มลงชื่อตรวจสอบการตั้งค่า
+      // ปุ่มลงชื่อตรวจสอบการตั้งค่า
       if (this.role === role_definition.Admin) {
         if (this.approved === "xxxxx") {
           const approved_button_div = document.createElement("div");
@@ -880,7 +878,7 @@
     renderWeightSummary() {
       let weights = [];
       let thickness = [];
-      Object.entries(this.weighingData).forEach(([timestamp, rowData]) => {
+      this.weighingData.forEach((rowData) => {
         // ดึงค่าน้ำหนัก 10 เม็ด ครั้งที่ 1 ที่อยู่ในช่วง
         if (
           rowData.weight1 >= this.meanWeightRegMin &&
@@ -898,7 +896,7 @@
         }
 
         // ดึงค่าความหนาที่อยู่ในช่วง
-        Object.entries(rowData.thickness).forEach(([key, tiknessVal]) => {
+        rowData.thickness.forEach((tiknessVal) => {
           if (
             tiknessVal >= this.thicknessMin &&
             tiknessVal <= this.thicknessMax
@@ -1017,9 +1015,10 @@
       // เพิ่มปุ่มลงชื่อตรวจสอบข้อมูลน้ำหนักยา
       thead.classList.add("weight10s-checker");
       if (
-        this.role === role_definition.Admin ||
+        (this.role === role_definition.Admin ||
         this.role === role_definition.Superuser ||
-        this.role === role_definition.Inspector
+        this.role === role_definition.Inspector) &&
+        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addCheckerButton = document.createElement("button");
         this.addCheckerButton.classList.add("add-checker-button");
@@ -1032,7 +1031,7 @@
       // Create table body
       const tbody = document.createElement("tbody");
 
-      Object.entries(this.weighingData).forEach(([timestamp, rowData]) => {
+      this.weighingData.forEach((rowData) => {
         const row = document.createElement("tr");
         let weights_cache = [];
         this.weighingHeaders.forEach((header) => {
@@ -1044,7 +1043,7 @@
           if (key === "timestamp") {
             const div = document.createElement("div");
             div.classList.add("data-control-10s", "time-control");
-            div.textContent = timestamp;
+            div.textContent = data;
             cell.appendChild(div);
           } else if (key === "type") {
             const div = document.createElement("div");
@@ -1140,7 +1139,7 @@
       const title_headerRow1 = document.createElement("tr");
       const title_headerRow2 = document.createElement("tr");
       const headerRow = document.createElement("tr");
-
+      
       this.thicknessHeaders.forEach((header, index) => {
         if (index == 0) {
           const timestamp = document.createElement("th");
@@ -1174,72 +1173,76 @@
       // Create table body
       const tbody = document.createElement("tbody");
 
-      Object.entries(this.weighingData).forEach(([timestamp, rowData]) => {
-        const row = document.createElement("tr");
-
-        let thicknessValues = [];
-        this.thicknessHeaders.forEach((header) => {
-          const key = Object.keys(header)[0];
-          const cell = document.createElement("td");
-          const data = rowData.thickness[key];
+      // เพิ่มข้อมูลความหนา
+      this.weighingData.forEach((rowData) => {
+        if (rowData.thickness[0] !== "-") {
+          const row = document.createElement("tr");
 
           // timestamp
-          const div = document.createElement("div");
-          if (key === "timestamp") {
-            div.classList.add("data-control-10s", "time-control");
-            div.textContent = timestamp;
-            cell.appendChild(div);
-          } else {
-            if (data !== "-") {
-              thicknessValues.push(parseFloat(data).toFixed(2));
-            }
+          const timestampCell = document.createElement("td");
+          const timestampDiv = document.createElement("div");
+          timestampDiv.classList.add("data-control-10s", "time-control");
+          timestampDiv.textContent = rowData.timestamp;
+          timestampCell.appendChild(timestampDiv);
+          row.appendChild(timestampCell);
 
+          // เพิ่มข้อมูลความหนา
+          let thicknessValues = [];
+          rowData.thickness.forEach((thickness) => {
+            const cell = document.createElement("td");
+            const div = document.createElement("div");
+
+            thicknessValues.push(parseFloat(thickness).toFixed(2));
             div.classList.add("data-control-10s", "thickness-control");
-            div.textContent = data == "-" ? data : parseFloat(data).toFixed(2);
+            div.textContent =
+              thickness == "-" ? thickness : parseFloat(thickness).toFixed(2);
             cell.appendChild(div);
-          }
-          row.appendChild(cell);
-        });
+            row.appendChild(cell);
+          });
+          
+          let min = Math.min(...thicknessValues);
+          let max = Math.max(...thicknessValues);
 
-        let min = Math.min(...thicknessValues);
-        let max = Math.max(...thicknessValues);
-        let isMin = false;
-        let isMax = false;
+          // หาค่า min และ max ในตาราง
+          let lastIndex = 0;
+          row
+            .querySelectorAll("td .thickness-control")
+            .forEach((cell, index) => {
+              const value = parseFloat(cell.textContent);
+              // หา cell ไม่ได้อยู่ในช่วง
+              if (value < this.thicknessMin) {
+                cell.classList.add("thickness-outOfRange-min");
+                thicknessValues.splice(index - lastIndex, 1);
+                lastIndex += 1;
+              } else if (value > this.thicknessMax) {
+                cell.classList.add("thickness-outOfRange-max");
+                thicknessValues.splice(index - lastIndex, 1);
+                lastIndex += 1;
+              }
+          });
 
-        // เน้นค่า min และ max ในตาราง
-        let lastIndex = 0;
-        row.querySelectorAll("td .thickness-control").forEach((cell, index) => {
-          const value = parseFloat(cell.textContent);
-          // หา cell ไม่ได้อยู่ในช่วง
-          if (value < this.thicknessMin) {
-            cell.classList.add("thickness-outOfRange-min");
-            thicknessValues.splice(index - lastIndex, 1);
-            lastIndex += 1;
-          } else if (value > this.thicknessMax) {
-            cell.classList.add("thickness-outOfRange-max");
-            thicknessValues.splice(index - lastIndex, 1);
-            lastIndex += 1;
-          }
-        });
+          // หาค่า min และ max ในตาราง
+          min = Math.min(...thicknessValues);
+          max = Math.max(...thicknessValues);
+          let isMin = false;
+          let isMax = false;
 
-        min = Math.min(...thicknessValues);
-        max = Math.max(...thicknessValues);
+          row.querySelectorAll("td .thickness-control").forEach((cell) => {
+            const value = parseFloat(cell.textContent);
+            // หา cell ที่มีค่าตรงกับ min
+            if (value === min && !isMin) {
+              isMin = true;
+              cell.classList.add("thickness-min");
+            }
+            // หา cell ที่มีค่าตรงกับ max
+            if (value === max && !isMax) {
+              isMax = true;
+              cell.classList.add("thickness-max");
+            }
+          });
 
-        row.querySelectorAll("td .thickness-control").forEach((cell) => {
-          const value = parseFloat(cell.textContent);
-          // หา cell ที่มีค่าตรงกับ min
-          if (value === min && !isMin) {
-            isMin = true;
-            cell.classList.add("thickness-min");
-          }
-          // หา cell ที่มีค่าตรงกับ max
-          if (value === max && !isMax) {
-            isMax = true;
-            cell.classList.add("thickness-max");
-          }
-        });
-
-        tbody.appendChild(row);
+          tbody.appendChild(row);
+        }
       });
 
       table.appendChild(tbody);
@@ -1294,8 +1297,9 @@
 
       // เพิ่มข้อมูล remarks
       if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
+        (this.role === role_definition.Admin ||
+        this.role === role_definition.Superuser) &&
+        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addRemarksButton = document.createElement("button");
         this.addRemarksButton.classList.add("add-remarks-button");
@@ -1308,20 +1312,14 @@
       // Create table body
       this.remarks_tbody = document.createElement("tbody");
 
-      Object.entries(this.remarksData).forEach(([timestamp, rowData]) => {
+      this.remarksData.forEach((rowData) => {
         const row = document.createElement("tr");
 
         this.remarksHeaders.forEach((header) => {
           const key = Object.keys(header)[0];
           const cell = document.createElement("td");
           const data = rowData[key];
-
-          // timestamp
-          if (key === "timestamp") {
-            cell.textContent = timestamp;
-          } else {
-            cell.textContent = data || "";
-          }
+          cell.textContent = data || "";
           row.appendChild(cell);
         });
 
@@ -1383,7 +1381,6 @@
           },
           select: function (event, ui) {
             const value = ui.item.value;
-            console.log(value);
             this.loadWeighingData(datatest);
           }.bind(this),
         })
@@ -1508,8 +1505,8 @@
       this.finished = this.settingDetail.finished;
       this.finishTime = this.settingDetail.finishTime;
 
-      this.weighingData = data.weighing.dataset;
-      this.remarksData = data.remarks.dataset;
+      this.weighingData = data.weighing;
+      this.remarksData = data.remarks;
 
       if (this.container.innerHTML != "") {
         $(this.container).hide();
@@ -1700,7 +1697,7 @@
       detail_container.appendChild(settings_container);
       container.appendChild(detail_container);
 
-      // Method, ปุ่มลงชื่อตรวจสอบการตั้งค่า
+      // ปุ่มลงชื่อตรวจสอบการตั้งค่า
       if (this.role === role_definition.Admin) {
         if (this.approved === "xxxxx") {
           const approved_button_div = document.createElement("div");
@@ -2115,7 +2112,6 @@
       this.productLists = settingLists.productLists;
       this.tabletLists = settingLists.tabletLists;
       this.balanceLists = settingLists.balanceLists;
-      console.log(settingLists);
     }
 
     // ค้นหาข้อมูลการตั้งค่าจากรายชื่อยา
@@ -2180,7 +2176,6 @@
           },
           select: function (event, ui) {
             const value = ui.item.value;
-            console.log(value);
             this.searchProduct(value);
           }.bind(this),
         })
@@ -2188,7 +2183,7 @@
           $(this).data("ui-autocomplete").search($(this).val());
         });
 
-      $(element).keyup((event) => {
+      $(element).on("input", (event) => {
         this.searchProduct(event.target.value);
       });
     }
@@ -2235,7 +2230,7 @@
         input = document.createElement("input");
         input.classList.add("form-control");
         input.required = true;
-        input.type = "text";
+        input.type = type;
         input.placeholder = placeholder;
       }
 
@@ -2538,7 +2533,7 @@
       const productName = this.createInputOuterBorder({
         id: "productName",
         placeholder: "พิมพ์ชื่อยา...",
-        type: "input",
+        type: "search",
       });
       search_group.appendChild(productName);
 
@@ -2610,7 +2605,7 @@
       const productName = this.createInputOuterBorder({
         id: "productName",
         placeholder: "พิมพ์ชื่อยา...",
-        type: "input",
+        type: "search",
       });
       search_group.appendChild(productName);
       form.appendChild(search_group);

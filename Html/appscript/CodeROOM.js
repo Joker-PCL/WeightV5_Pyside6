@@ -1,6 +1,61 @@
+// ดึงข้อมูลชีตทั้งหมดที่อยู่ในฐานข้อมูล สร้าง dropdown list
+function getProductionLists10s() {
+  const verifyToken = validateToken();
+
+  if (verifyToken.message != "success") {
+    return;
+  }
+  else {
+    let folderId10s = globalVariables().folderId10s;
+    let folder10s = DriveApp.getFolderById(folderId10s);
+    let contents10s = folder10s.getFiles();
+    let sheetLists10s = [];
+
+    const fileType = "application/vnd.google-apps.spreadsheet";
+    if (verifyToken.data.role != "Operator") {
+      while (contents10s.hasNext()) {
+        let file = contents10s.next();
+        if (file.getMimeType() === fileType) {
+          const tablet_name = file.getName().toUpperCase();
+          const tablet_url_10s = file.getUrl();
+          sheetLists10s.push({
+            name: tablet_name,
+            url: tablet_url_10s,
+          });
+        };
+      };
+    };
+
+    // จัดเรียงข้อมูลตามวันที่
+    sheetLists10s = sheetLists10s.sort((item1, item2) => {
+      const date1Parts = item1.name.split('_').pop().split('/');
+      const date2Parts = item2.name.split('_').pop().split('/');
+      const date1 = new Date(`${date1Parts[2]}-${date1Parts[1]}-${date1Parts[0]}`);
+      const date2 = new Date(`${date2Parts[2]}-${date2Parts[1]}-${date2Parts[0]}`);
+      return date1 - date2;
+    });
+
+    let ssMain = SpreadsheetApp.getActiveSpreadsheet();
+    let shTabetList = ssMain.getSheetByName(globalVariables().shTabetList);
+
+    let lists = shTabetList.getDataRange().getDisplayValues().slice(1);
+    lists.reverse().forEach(data => {
+      const tablet_name = data[0].toUpperCase();
+      const tablet_url_10s = data[3];
+      sheetLists10s.push({
+        name: `เครื่องตอก ${tablet_name} (LOT. ปัจจุบัน)`,
+        url: tablet_url_10s,
+      });
+    });
+
+    console.log(sheetLists10s);
+    return sheetLists10s;
+  }
+}
+
 // ดึงข้อมูลจากชีตปัจจุบัน จาก url ของชีต 10 เม็ด
-function getCurrentData_10s() {
-  const url = "https://docs.google.com/spreadsheets/d/1XySGAC8aaywquHFKwr_zBBDpOgj99CF15UHe3P3kYF8/edit?usp=sharing"
+function getWeighingData_10s(url) {
+  // const url = "https://docs.google.com/spreadsheets/d/1XySGAC8aaywquHFKwr_zBBDpOgj99CF15UHe3P3kYF8/edit?usp=sharing"
   const spreadsheet = SpreadsheetApp.openByUrl(url); // เข้าถึง Spreadsheet
   const data_weighing = spreadsheet.getSheetByName(globalVariables().shWeight10s) // เข้าถึง sheet ชั่งน้ำหนัก
     .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
@@ -17,31 +72,9 @@ function getCurrentData_10s() {
     .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
     .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
 
-  // สร้างข้อมูลน้ำหนักยา
-  let weighingData = {};
-  data_weighing.forEach((row) => {
-    const timestamp = row[0];
-    const rowData = {
-      type: row[1],
-      weight1: row[2],
-      weight2: row[3],
-      characteristics: row[6],
-      operator: row[7],
-      inspector: row[8],
-      thickness: {}
-    };
-
-    // ข้อมูลความหนา
-    for (let i = 0; i < 10; i++) {
-      rowData.thickness[`thickness${i + 1}`] = row[9 + i];
-    }
-
-    // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataObj
-    weighingData[timestamp] = rowData;
-  });
 
   // สร้างข้อมูลการตั้งค่าน้ำหนักยา
-  const settingData = {
+  const settingDetail = {
     "productName": data_setting[0][1],  // ชื่อยา
     "lot": data_setting[1][1],  // เลขที่ผลิต
     "balanceID": data_setting[2][1],  // เครื่องชั่ง
@@ -60,12 +93,35 @@ function getCurrentData_10s() {
     "finishTime": data_setting[15][1],  // จบการผลิตเวลา
   };
 
-// สร้างข้อมูลการ remarks
-  let remarksData = {};
-  data_remarks.forEach((row) => {
-    const timestamp = row[0];
+  // สร้างข้อมูลน้ำหนักยา
+  let weighingData = [];
+  data_weighing.forEach((row) => {
     const rowData = {
-      incident: row[1],
+      timestamp: row[0],
+      type: row[1],
+      weight1: row[2],
+      weight2: row[3],
+      characteristics: row[4],
+      operator: row[5],
+      inspector: row[6],
+      thickness: []
+    };
+
+    // ข้อมูลความหนา
+    for (let i = 0; i < 10; i++) {
+      rowData.thickness.push(row[7 + i]);
+    }
+
+    // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataObj
+    weighingData.push(rowData);
+  });
+
+// สร้างข้อมูลการ remarks
+  let remarksData = [];
+  data_remarks.forEach((row) => {
+    const rowData = {
+      timestamp: row[0],
+      issues: row[1],
       cause: row[2],
       resolve: row[3],
       notes: row[4],
@@ -74,17 +130,18 @@ function getCurrentData_10s() {
     };
 
     // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataObj
-    remarksData[timestamp] = rowData;
+    remarksData.push(rowData);
   });
 
   // เก็บข้อมูลการชั่งน้ำหนักทั้งหมด
-  const data = {
-    "weighingData": weighingData,
-    "settingData": settingData,
-    "remarksData": remarksData
+  const dataLists = {
+    "settingDetail": settingDetail,
+    "weighingData": weighingData.reverse(),
+    "remarksData": remarksData.reverse(),
   };
 
-  console.log(data.remarksData);
+  console.log(dataLists.weighingData)
+  return dataLists;
 };
 
 // ลงชื่อผู้ตรวจสอบการตั้งค่า

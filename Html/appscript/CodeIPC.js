@@ -1,3 +1,56 @@
+// ดึงข้อมูลชีตทั้งหมดที่อยู่ในฐานข้อมูล สร้าง dropdown list
+function getProductionListsIpc() {
+  const verifyToken = validateToken();
+
+  if (verifyToken.message != "success") {
+    return;
+  }
+  else {
+    let folderIdIPC = globalVariables().folderIdIPC;
+    let folderIPC = DriveApp.getFolderById(folderIdIPC);
+    let contentsIPC = folderIPC.getFiles();
+
+    let sheetListsIPC = [];
+
+    const fileType = "application/vnd.google-apps.spreadsheet";
+    if (verifyToken.data.role != "Operator") {
+      while (contentsIPC.hasNext()) {
+        let file = contentsIPC.next();
+        if (file.getMimeType() === fileType) {
+          const tablet_name = file.getName().toUpperCase();
+          const tablet_url_10s = file.getUrl();
+          sheetListsIPC[tablet_name] = tablet_url_10s;
+        };
+      };
+    };
+
+    // // จัดเรียงข้อมูลตามวันที่
+    // listsIPC = sheetListsIPC.sort((item1, item2) => {
+    //   const date1Parts = item1[0].split('_').pop().split('/');
+    //   const date2Parts = item2[0].split('_').pop().split('/');
+    //   const date1 = new Date(`${date1Parts[2]}-${date1Parts[1]}-${date1Parts[0]}`);
+    //   const date2 = new Date(`${date2Parts[2]}-${date2Parts[1]}-${date2Parts[0]}`);
+    //   return date1 - date2;
+    // });
+
+    let ssMain = SpreadsheetApp.getActiveSpreadsheet();
+    let shTabetList = ssMain.getSheetByName(globalVariables().shTabetList);
+
+    let lists = shTabetList.getDataRange().getDisplayValues().slice(1);
+    lists.reverse().forEach(data => {
+      const tablet_name = data[0].toUpperCase();
+      const tablet_url_ipc = data[5];
+      sheetListsIPC.push({
+        name: `เครื่องตอก ${tablet_name} (LOT. ปัจจุบัน)`,
+        url: tablet_url_ipc,
+      });
+    });
+
+    console.log(sheetListsIPC);
+    return sheetListsIPC;
+  }
+}
+
 // ดึงข้อมูลจากชีต จากหมายเลขเครื่องตอก URL
 function getCurrentData_IPC(url) {
   let ssIPC = SpreadsheetApp.openByUrl(url);

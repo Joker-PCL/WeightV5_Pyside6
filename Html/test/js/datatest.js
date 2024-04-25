@@ -925,3 +925,63 @@ const productionLists = {
       "https://docs.google.com/spreadsheets/d/1Z_yI1KQp2YCoDHp8T3Zs5Pw1JMVt3thdrxUnArUv-bo/edit?usp=drive_link",
   },
 };
+
+const weightsTest = [
+  {
+    timestamp: "01/02/2024, 12:35:43",
+    type: "ONLINE",
+    weight1: "0.982",
+    weight2: "0.981",
+    characteristics: "ปกติ",
+    operator: "กัญญาวีย์",
+    inspector: "-",
+    thickness: [
+      "2.81",
+      "2.84",
+      "2.79",
+      "2.81",
+      "2.84",
+      "2.83",
+      "2.79",
+      "2.80",
+      "2.85",
+      "2.81",
+    ],
+  },
+  {
+    timestamp: "01/02/2024, 12:55:49",
+    type: "ONLINE",
+    weight1: "0.980",
+    weight2: "0.978",
+    characteristics: "ปกติ",
+    operator: "กัญญาวีย์",
+    inspector: "อรทัย",
+    thickness: ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-"],
+  },
+  {
+    timestamp: "01/02/2024, 14:56:08",
+    type: "ONLINE",
+    weight1: "0.985",
+    weight2: "0.978",
+    characteristics: "ปกติ",
+    operator: "กัญญาวีย์",
+    inspector: "อรทัย",
+    thickness: [
+      "2.77",
+      "2.80",
+      "2.77",
+      "2.78",
+      "2.79",
+      "2.77",
+      "2.75",
+      "2.75",
+      "2.78",
+      "2.79",
+    ],
+  },
+];
+
+
+weightsTest.forEach(function(data) {
+  console.log(data)
+});

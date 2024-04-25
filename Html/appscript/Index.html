@@ -152,7 +152,7 @@
         </div>
       </div>
 
-      <div class="page" data-toggle="weight_10s_page">
+      <div class="page active" data-toggle="weight_10s_page">
         <p class="page-title">ตารางข้อมูลน้ำหนักยา 10 เม็ด</p>
         <div id="container10s" class="weight-container"></div>
       </div>
@@ -206,7 +206,7 @@
         </div>
       </div>
 
-      <div class="page active" data-toggle="data_logging_page">
+      <div class="page" data-toggle="data_logging_page">
         <p class="page-title">บันทึกการปฏิบัติงาน</p>
         <div id="data_logging" class="dataLogging-container"></div>
       </div>
@@ -226,8 +226,8 @@
       //     { "orderable": false, "targets": [1, 2, 3, 4, 5, 6] },
       // ],
 
-      // ordering: false,
-      order: [[0, "desc"]],
+      ordering: false,
+      // order: [[0, "desc"]],
       iDisplayLength: 10,
       responsive: true,
 
@@ -249,6 +249,11 @@
         },
       },
     };
+
+    // // จัดเรียงข้อมูล DataTable ตามวันที่มากไปน้อย
+    // $(document).ready(function () {
+    //   DataTable.datetime("DD/MM/YYYY, HH:mm:ss");
+    // });
   </script>
 
   <?!= include('dataTest'); ?>
@@ -336,6 +341,10 @@
           ],
         },
       });
+
+      google.script.run.withSuccessHandler(productionLists=> {
+        weight10s.createProductionLists(productionLists);
+      }).getProductionLists10s();
     });
   </script>
 
