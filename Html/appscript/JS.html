@@ -433,9 +433,8 @@
 
     searchUrl(currentListname) {
       const result = this.productionLists.find((lists) => {
-          return lists.name == currentListname;
-        }
-      );
+        return lists.name == currentListname;
+      });
 
       if (result) {
         return result.url;
@@ -587,9 +586,8 @@
     }
 
     // แสดงหน้าชั่งน้ำหนัก
-    render(data) {
-      console.log(data);
-      this.settingDetail = data.settingDetail;
+     render(dataset) {
+      this.settingDetail = dataset.settingDetail;
       this.productName = this.settingDetail.productName;
       this.lot = this.settingDetail.lot;
       this.balanceID = this.settingDetail.balanceID;
@@ -607,8 +605,8 @@
       this.finished = this.settingDetail.finished;
       this.finishTime = this.settingDetail.finishTime;
 
-      this.weighingData = data.weighingData;
-      this.remarksData = data.remarksData;
+      this.weighingData = dataset.weighingData;
+      this.remarksData = dataset.remarksData;
 
       if (this.container.innerHTML != "") {
         $(this.container).hide();
@@ -663,12 +661,13 @@
         this.formRemarks.createForm();
       });
 
+      // แสดงข้อมูลชั่งน้ำหนัก
       $(this.container).fadeIn(1500);
 
       // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
       if (
         (this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser) &&
+          this.role === role_definition.Superuser) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         $(document).ready(() => {
@@ -728,10 +727,14 @@
       buttonEl.classList.add("detail-buttons-group");
 
       // ปุ่มอัพเดทข้อมูล
-      if(this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1) {
+      if (this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1) {
         this.buttonUpdate = document.createElement("button");
         this.buttonUpdate.id = "button_update_10s";
-        this.buttonUpdate.classList.add("btn", "btn-secondary", "button-update");
+        this.buttonUpdate.classList.add(
+          "btn",
+          "btn-secondary",
+          "button-update"
+        );
         this.buttonUpdate.textContent = "อัพเดทข้อมูล";
         buttonEl.appendChild(this.buttonUpdate);
       }
@@ -739,8 +742,9 @@
       // ปุ่มจบการผลิต
       if (
         (this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser) &&
-        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
+          this.role === role_definition.Superuser) &&
+        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1 &&
+        this.productName !== "xxxxx"
       ) {
         if (this.prepared != "xxxxx" && this.approved != "xxxxx") {
           this.buttonFinished = document.createElement("button");
@@ -831,7 +835,7 @@
 
       // ปุ่มลงชื่อตรวจสอบการตั้งค่า
       if (this.role === role_definition.Admin) {
-        if (this.approved === "xxxxx") {
+        if (this.approved === "xxxxx" && this.productName !== "xxxxx") {
           const approved_button_div = document.createElement("div");
           approved_button_div.classList.add("d-flex", "justify-content-center");
           this.buttonApproved = document.createElement("button");
@@ -1016,8 +1020,8 @@
       thead.classList.add("weight10s-checker");
       if (
         (this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser ||
-        this.role === role_definition.Inspector) &&
+          this.role === role_definition.Superuser ||
+          this.role === role_definition.Inspector) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addCheckerButton = document.createElement("button");
@@ -1139,7 +1143,7 @@
       const title_headerRow1 = document.createElement("tr");
       const title_headerRow2 = document.createElement("tr");
       const headerRow = document.createElement("tr");
-      
+
       this.thicknessHeaders.forEach((header, index) => {
         if (index == 0) {
           const timestamp = document.createElement("th");
@@ -1199,7 +1203,7 @@
             cell.appendChild(div);
             row.appendChild(cell);
           });
-          
+
           let min = Math.min(...thicknessValues);
           let max = Math.max(...thicknessValues);
 
@@ -1219,7 +1223,7 @@
                 thicknessValues.splice(index - lastIndex, 1);
                 lastIndex += 1;
               }
-          });
+            });
 
           // หาค่า min และ max ในตาราง
           min = Math.min(...thicknessValues);
@@ -1298,7 +1302,7 @@
       // เพิ่มข้อมูล remarks
       if (
         (this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser) &&
+          this.role === role_definition.Superuser) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addRemarksButton = document.createElement("button");
@@ -1362,31 +1366,9 @@
       this.listsMenuInput = this.listsMenu.input;
       this.main_container.appendChild(this.viewWeighingMenu);
 
-      // สร้างรายการ autocomplete รายการผลิต 10 เม็ด
-      const dataList = [
-        "เครื่องตอก T11 (LOT. ปัจจุบัน)",
-        "เครื่องตอก T17 (LOT. ปัจจุบัน)",
-        "40474_DOMPERDONE_T17_IPC_29/03/2024",
-        "40473_DOMPERDONE_T17_IPC_26/03/2024",
-      ];
-
-      $(this.listsMenuInput)
-        .autocomplete({
-          source: dataList,
-          autoFocus: false,
-          minLength: 0,
-          open: function (event, ui) {
-            var widget = $(this).autocomplete("widget");
-            widget.attr("id", `${containerId}_widget`);
-          },
-          select: function (event, ui) {
-            const value = ui.item.value;
-            this.loadWeighingData(datatest);
-          }.bind(this),
-        })
-        .focus(function () {
-          $(this).data("ui-autocomplete").search($(this).val());
-        });
+      this.productionLists = []; // รายการผลิตทั้งหมด
+      this.currentListname = ""; // รายการผลิตที่เลือก
+      this.url = ""; // url ไฟล์
 
       // สร้างฟอร์มสำหรับบันทึกข้อมูล Remarks
       if (
@@ -1401,19 +1383,60 @@
       }
     }
 
+    searchUrl(currentListname) {
+      const result = this.productionLists.find((lists) => {
+        return lists.name == currentListname;
+      });
+
+      if (result) {
+        return result.url;
+      } else {
+        return null;
+      }
+    }
+
+    createProductionLists(productionLists) {
+      // สร้างรายการ autocomplete รายการผลิต 10 เม็ด
+      this.productionLists = productionLists;
+
+      const dataSource = [];
+
+      this.productionLists.forEach((lists) => {
+        dataSource.push(lists.name);
+      });
+
+      $(this.listsMenuInput)
+        .autocomplete({
+          source: dataSource.reverse(),
+          autoFocus: false,
+          minLength: 0,
+          open: function (event, ui) {
+            var widget = $(this).autocomplete("widget");
+            // widget.attr("id", `${this.containerId}_widget`);
+          },
+          select: function (event, ui) {
+            this.currentListname = ui.item.value;
+            this.loadWeighingData();
+          }.bind(this),
+        })
+        .focus(function () {
+          $(this).data("ui-autocomplete").search($(this).val());
+        });
+    }
+
     // โหลดข้อมูลการชั่งน้ำหนัก
     loadWeighingData() {
       loadingPage("show");
 
-      setTimeout(
-        function () {
+      this.url = this.searchUrl(this.currentListname);
+
+      google.script.run
+        .withSuccessHandler((dataList) => {
           loadingPage("hide");
           SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-
-          this.render(datatestIpc);
-        }.bind(this),
-        2500
-      );
+          this.render(dataList);
+        })
+        .getWeighingData_IPC(this.url);
     }
 
     // จบการผลิต
@@ -1484,8 +1507,9 @@
     }
 
     // แสดงผลข้อมูลการชั่งน้ำหนัก
-    render(data) {
-      this.settingDetail = data.settingDetail;
+     render(dataset) {
+      console.log(dataset);
+      this.settingDetail = dataset.settingDetail;
       this.productName = this.settingDetail.productName;
       this.lot = this.settingDetail.lot;
       this.balanceID = this.settingDetail.balanceID;
@@ -1505,8 +1529,8 @@
       this.finished = this.settingDetail.finished;
       this.finishTime = this.settingDetail.finishTime;
 
-      this.weighingData = data.weighing;
-      this.remarksData = data.remarks;
+      this.weighingData = dataset.weighingData;
+      this.remarksData = dataset.remarksData;
 
       if (this.container.innerHTML != "") {
         $(this.container).hide();
@@ -1538,7 +1562,7 @@
       // เพิ่ม event ปุ่มลงชื่อตรวจสอบการตั้งค่า
       $(this.buttonApproved).click(this.signInToCheckTheSettings.bind(this));
 
-      // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
+      // แสดงข้อมูลชั่งน้ำหนัก
       $(this.container).fadeIn(1500);
 
       // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
@@ -1573,14 +1597,15 @@
       }
     }
 
+    // เทียบข้อมูลน้ำหนักกับเกณฑ์การผลิต
     weightOutOfRange(weight) {
-      if (weight < this.meanWeightRegMin)
+      if (weight < parseFloat(this.meanWeightRegMin))
         return "weight-outOfRange-regulation-min";
-      else if (weight > this.meanWeightRegMax) {
+      else if (weight > parseFloat(this.meanWeightRegMax)) {
         return "weight-outOfRange-regulation-max";
-      } else if (weight < this.meanWeightInhouseMin) {
+      } else if (weight < parseFloat(this.meanWeightInhouseMin)) {
         return "weight-outOfRange-inHouse-min";
-      } else if (weight > this.meanWeightInhouseMax) {
+      } else if (weight > parseFloat(this.meanWeightInhouseMax)) {
         return "weight-outOfRange-inHouse-max";
       } else {
         return;
@@ -1602,19 +1627,29 @@
       title.innerHTML = "รายละเอียดการตั้งค่า";
       settings_container.appendChild(title);
 
-      // เพิ่มปุ่มอัพเดทข้อมูล
+      // group ปุ่มอัพเดทข้อมูล, เพิ่มปุ่มจบการผลิต
       const buttonEl = document.createElement("div");
       buttonEl.classList.add("detail-buttons-group");
-      this.buttonUpdate = document.createElement("button");
-      this.buttonUpdate.id = "button_update_ipc";
-      this.buttonUpdate.classList.add("btn", "btn-secondary", "button-update");
-      this.buttonUpdate.textContent = "อัพเดทข้อมูล";
-      buttonEl.appendChild(this.buttonUpdate);
 
-      // เพิ่มปุ่มจบการผลิต
+      // เพิ่มปุ่มอัพเดทข้อมูล
+      if (this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1) {
+        this.buttonUpdate = document.createElement("button");
+        this.buttonUpdate.id = "button_update_ipc";
+        this.buttonUpdate.classList.add(
+          "btn",
+          "btn-secondary",
+          "button-update"
+        );
+        this.buttonUpdate.textContent = "อัพเดทข้อมูล";
+        buttonEl.appendChild(this.buttonUpdate);
+      }
+
+      // ปุ่มจบการผลิต
       if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
+        (this.role === role_definition.Admin ||
+          this.role === role_definition.Superuser) &&
+        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1 &&
+        this.productName !== "xxxxx"
       ) {
         this.buttonFinished = document.createElement("button");
         this.buttonFinished.id = "button_finished_ipc";
@@ -1699,7 +1734,7 @@
 
       // ปุ่มลงชื่อตรวจสอบการตั้งค่า
       if (this.role === role_definition.Admin) {
-        if (this.approved === "xxxxx") {
+        if (this.approved === "xxxxx" && this.productName !== "xxxxx") {
           const approved_button_div = document.createElement("div");
           approved_button_div.classList.add("d-flex", "justify-content-center");
           this.buttonApproved = document.createElement("button");
@@ -1724,8 +1759,8 @@
     // สร้างสรุปข้อมูลการชั่งน้ำหนัก ipc
     renderWeightSummary() {
       let weights = [];
-      Object.entries(this.weighingData).forEach(([datetime, rowData]) => {
-        Object.entries(rowData.weights).forEach(([timestamp, data]) => {
+      this.weighingData.forEach((rowData) => {
+        rowData.weights.forEach((data) => {
           if (
             data.weight >= this.meanWeightRegMin &&
             data.weight <= this.meanWeightRegMax
@@ -1776,7 +1811,7 @@
     }
 
     // สร้างตารางข้อมูลการชั่งน้ำหนัก ipc
-    createTable(tableID, [datetime, rowData]) {
+    createTable(tableID, rowData) {
       const tableCreator = new CreateTable(tableID); // Create table instance
       const table = tableCreator.table; // Get the created table element
 
@@ -1791,7 +1826,7 @@
       const date_headerRow = document.createElement("tr");
       const date_headerCell = document.createElement("th");
       date_headerCell.setAttribute("colspan", "2");
-      date_headerCell.textContent = datetime;
+      date_headerCell.textContent = rowData.datetime;
       date_headerRow.appendChild(date_headerCell);
 
       const headerRow = document.createElement("tr");
@@ -1811,23 +1846,23 @@
       const tbody = document.createElement("tbody");
       let weights_cache = [];
 
-      Object.entries(rowData.weights).forEach(([timestamp, data]) => {
+      rowData.weights.forEach(({timestamp, weight}) => {
         const row = document.createElement("tr");
         const time_cell = document.createElement("td");
-        time_cell.textContent = data.timestamp;
+        time_cell.textContent = timestamp;
         const weight_cell = document.createElement("td");
         const weight_div = document.createElement("div");
         weight_div.classList.add(
           "data-control-ipc",
-          this.weightOutOfRange(data.weight)
+          this.weightOutOfRange(weight)
         );
-        weight_div.textContent = data.weight;
+        weight_div.textContent = weight;
         row.appendChild(time_cell);
         weight_cell.appendChild(weight_div);
         row.appendChild(weight_cell);
         tbody.appendChild(row);
 
-        weights_cache.push(data.weight);
+        weights_cache.push(weight);
       });
 
       table.appendChild(tbody);
@@ -1842,9 +1877,10 @@
       const average =
         weights_cache.reduce((a, b) => parseFloat(a) + parseFloat(b)) /
         weights_cache.length;
-      if (average < this.meanWeightAvgMin) {
+
+      if (average < parseFloat(this.meanWeightAvgMin)) {
         average_div.classList.add("weight-outOfRange-average-min");
-      } else if (average > this.meanWeightAvgMax) {
+      } else if (average > parseFloat(this.meanWeightAvgMax)) {
         average_div.classList.add("weight-outOfRange-average-max");
       }
       average_div.textContent = average.toFixed(3);
@@ -1870,7 +1906,7 @@
       weightVariationMin_div.textContent = weightVariationMin;
       const weightVariationMax_cell = document.createElement("td");
       const weightVariationMax_div = document.createElement("div");
-      const weightVariationMax = Math.min(...weights_cache).toFixed(3);
+      const weightVariationMax = Math.max(...weights_cache).toFixed(3);
       weightVariationMax_div.classList.add(
         "data-control-ipc",
         this.weightOutOfRange(weightVariationMax)
@@ -1935,11 +1971,12 @@
       return table;
     }
 
+    // สร้างตารางข้อมูลการชั่งน้ำหนัก ipc
     renderWeightTable() {
       const container = document.createElement("div");
       container.classList.add("container-slide");
 
-      const weighingData = Object.entries(this.weighingData);
+      const weighingData = this.weighingData;
 
       const total_slide = weighingData.length;
       const totalPages = parseInt(total_slide / 2);
@@ -2051,8 +2088,9 @@
 
       // เพิ่มข้อมูล remarks
       if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
+        (this.role === role_definition.Admin ||
+          this.role === role_definition.Superuser) &&
+        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addRemarksButton = document.createElement("button");
         this.addRemarksButton.classList.add("add-remarks-button");
@@ -2065,20 +2103,14 @@
       // Create table body
       this.remarks_tbody = document.createElement("tbody");
 
-      Object.entries(this.remarksData).forEach(([timestamp, rowData]) => {
+      this.remarksData.forEach((rowData) => {
         const row = document.createElement("tr");
 
         this.remarksHeaders.forEach((header) => {
           const key = Object.keys(header)[0];
           const cell = document.createElement("td");
           const data = rowData[key];
-
-          // timestamp
-          if (key === "timestamp") {
-            cell.textContent = timestamp;
-          } else {
-            cell.textContent = data || "";
-          }
+          cell.textContent = data || "";
           row.appendChild(cell);
         });
 
@@ -2167,7 +2199,7 @@
       // สร้าง dropdown lists
       $(element)
         .autocomplete({
-          source: datasource,
+          source: datasource.sort(),
           autoFocus: false,
           minLength: 0,
           open: function (event, ui) {

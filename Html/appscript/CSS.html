@@ -39,7 +39,7 @@
     --table-thead-th-font-size: 16px;
 
     --table-tbody-tr-hover-color: rgba(244, 255, 128, 0.741);
-    --table-tbody-tr-td-font-size: 14px;
+    --table-tbody-tr-td-font-size: 16px;
     --table-tbody-tr-td-font-color: #666666;
     --weight-outOfRange-min-color: #ff5d9e;
     --weight-outOfRange-max-color: #ff3320;
@@ -539,6 +539,37 @@
             }
           }
         }
+      }
+    }
+
+    & > tfoot > tr > td > div {
+      /* CSS WEIGHING CONDITION */
+      &.weight-outOfRange-inHouse-min,
+      &.weight-outOfRange-regulation-min,
+      &.weight-outOfRange-average-min {
+        background-color: var(--weight-outOfRange-min-color);
+        color: #ffffff;
+
+        /* &::before {
+          content: '\f063';
+          font-family: FontAwesome;
+          padding-right: 3px;
+          color: #ffffff;
+        } */
+      }
+
+      &.weight-outOfRange-inHouse-max,
+      &.weight-outOfRange-regulation-max,
+      &.weight-outOfRange-average-max {
+        background-color: var(--weight-outOfRange-max-color);
+        color: #ffffff;
+
+        /* &::before {
+          content: '\f062';
+          font-family: FontAwesome;
+          padding-right: 3px;
+          color: #ffffff;
+        } */
       }
     }
 

@@ -18,20 +18,23 @@ function getProductionListsIpc() {
         let file = contentsIPC.next();
         if (file.getMimeType() === fileType) {
           const tablet_name = file.getName().toUpperCase();
-          const tablet_url_10s = file.getUrl();
-          sheetListsIPC[tablet_name] = tablet_url_10s;
+          const tablet_url_ipc = file.getUrl();
+          sheetListsIPC.push({
+            name: tablet_name,
+            url: tablet_url_ipc,
+          });
         };
       };
     };
 
-    // // จัดเรียงข้อมูลตามวันที่
-    // listsIPC = sheetListsIPC.sort((item1, item2) => {
-    //   const date1Parts = item1[0].split('_').pop().split('/');
-    //   const date2Parts = item2[0].split('_').pop().split('/');
-    //   const date1 = new Date(`${date1Parts[2]}-${date1Parts[1]}-${date1Parts[0]}`);
-    //   const date2 = new Date(`${date2Parts[2]}-${date2Parts[1]}-${date2Parts[0]}`);
-    //   return date1 - date2;
-    // });
+    // จัดเรียงข้อมูลตามวันที่
+    sheetListsIPC = sheetListsIPC.sort((item1, item2) => {
+      const date1Parts = item1.name.split('_').pop().split('/');
+      const date2Parts = item2.name.split('_').pop().split('/');
+      const date1 = new Date(`${date1Parts[2]}-${date1Parts[1]}-${date1Parts[0]}`);
+      const date2 = new Date(`${date2Parts[2]}-${date2Parts[1]}-${date2Parts[0]}`);
+      return date1 - date2;
+    });
 
     let ssMain = SpreadsheetApp.getActiveSpreadsheet();
     let shTabetList = ssMain.getSheetByName(globalVariables().shTabetList);
@@ -52,51 +55,100 @@ function getProductionListsIpc() {
 }
 
 // ดึงข้อมูลจากชีต จากหมายเลขเครื่องตอก URL
-function getCurrentData_IPC(url) {
-  let ssIPC = SpreadsheetApp.openByUrl(url);
-  let sheetRemarksIPC = ssIPC.getSheetByName(globalVariables().shRemarks);
-  let ranges = globalVariables().dataRangeIPC.reverse();
-  let summaryRanges = globalVariables().summaryRangeIPC.reverse();
+function getWeighingData_IPC(url) {
+  // const url = "https://docs.google.com/spreadsheets/d/1Z_yI1KQp2YCoDHp8T3Zs5Pw1JMVt3thdrxUnArUv-bo/edit#gid=596757621";
+  const spreadsheet = SpreadsheetApp.openByUrl(url); // เข้าถึง Spreadsheet
+  const data_setting = spreadsheet.getSheetByName(globalVariables().shSetWeight)  // เข้าถึง sheet ตั้งค่าน้ำหนักยา
+    .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
+    .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
+    .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
 
-  let result = [];
+  const data_weighing = spreadsheet.getSheetByName(globalVariables().shWeightIPC) // เข้าถึง sheet ชั่งน้ำหนัก
+    .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
+    .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
+    .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
 
-  // ดึงข้อมูลน้ำหนักยา
-  let shIPC = ssIPC.getSheets();
-  let shName
-  let sheetIPC,
-    data,
-    colors,
-    dataSummary,
-    colorsSummary
+  const data_remarks = spreadsheet.getSheetByName(globalVariables().shRemarks)  // เข้าถึง sheet remarks
+    .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
+    .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
+    .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
 
-  shIPC.forEach(sh => {
-    shName = sh.getSheetName();
-    if (!["Remark", "USER", "Setting"].includes(shName)) {
-      ranges.forEach((range, index) => {
-        sheetIPC = ssIPC.getSheetByName(shName);
-        data = sheetIPC.getRange(range).getDisplayValues();
-        colors = sheetIPC.getRange(range).getBackgrounds();
+  // สร้างข้อมูลการตั้งค่าน้ำหนักยา
+  const settingDetail = {
+    "productName": data_setting[0][1],  // ชื่อยา
+    "lot": data_setting[1][1],  // เลขที่ผลิต
+    "balanceID": data_setting[2][1],  // เครื่องชั่ง
+    "tabletID": data_setting[3][1], // เครื่องตอก
+    "numberPunches": data_setting[4][1], // จำนวนสาก
+    "numberTablets": data_setting[5][1], // จำนวนเม็ดที่ต้องชั่ง
+    "meanWeight": data_setting[6][1], // น้ำหนักตามทฤษฎี 
+    "percentWeightVariation": data_setting[7][1], // เปอร์เซ็นเบี่ยงเบน
+    "meanWeightAvgMin": data_setting[8][1],  // ช่วงน้ำหนักเฉลี่ยที่ยอมรับ(Min.)
+    "meanWeightAvgMax": data_setting[9][1],  // ช่วงน้ำหนักเฉลี่ยที่ยอมรับ(Max.)
+    "meanWeightInhouseMin": data_setting[10][1],  // ช่วงน้ำหนักเบี่ยงเบนที่ยอมรับ (Min.)
+    "meanWeightInhouseMax": data_setting[11][1],  // ช่วงน้ำหนักเบี่ยงเบนที่ยอมรับ (Max.)
+    "meanWeightRegMin": data_setting[12][1],  // ช่วงน้ำหนักเบี่ยงเบนที่กฎหมายยอมรับ (Min.)
+    "meanWeightRegMax": data_setting[13][1],  // ช่วงน้ำหนักเบี่ยงเบนที่กฎหมายยอมรับ (Max.)
+    "prepared": data_setting[14][1],  // ตั้งค่าน้ำหนักโดย
+    "approved": data_setting[15][1],  // ตรวจสอบการตั้งค่าโดย
+    "finished": data_setting[16][1],  // จบการผลิตโดย
+    "finishTime": data_setting[17][1],  // จบการผลิตเวลา
+  };
 
-        dataSummary = sheetIPC.getRange(summaryRanges[index]).getDisplayValues();
-        colorsSummary = sheetIPC.getRange(summaryRanges[index]).getBackgrounds();
+  let weighingData = []; // สร้างตัวแปรไว้เก็บข้อมูลแบบ object
+  data_weighing.forEach((item, index) => {
+    if (index % 2 === 0) {
+      let rowData = {
+        "datetime": item[0],  // เก็บข้อมูลเวลา
+        "operator": item[1],  // เก็บข้อมูลผู้ปฎิบัติงาน
+        "type": item[2],  // เก็บประเภทข้อมูล
+        "characteristics": item[3],  // เก็บข้อมูลลักษณะเม็ดยา
+        "weights": []
+      };
 
-        result.push({
-          shName: shName,
-          data: data,
-          colors: colors,
-          dataSummary: dataSummary,
-          colorsSummary: colorsSummary
-        });
+      const slice_num = 5; // จำนวน index ที่ตัดออก
+      const weightValues = item.slice(slice_num); // ตัดข้อมูลออก 5 คลอลั่ม
 
+      weightValues.forEach((timestamp, idx) => {
+        const weight = data_weighing[index + 1][idx + slice_num];
+        if (timestamp) {
+          rowData['weights'].push({
+            'timestamp': timestamp,
+            'weight': weight
+          });
+        };
       });
+
+      console.log(rowData);
+      weighingData.push(rowData);
     };
   });
 
-  let sheetSetupIPC = ssIPC.getSheetByName(globalVariables().shSetWeight);
-  let setupWeightIPC = sheetSetupIPC.getRange(globalVariables().setupRangeIPC).getDisplayValues();
-  let remarks = sheetRemarksIPC.getDataRange().getDisplayValues().slice(2).reverse();
+  // สร้างข้อมูลการ remarks
+  let remarksData = [];
+  data_remarks.forEach((row) => {
+    const rowData = {
+      timestamp: row[0],
+      issues: row[1],
+      cause: row[2],
+      resolve: row[3],
+      notes: row[4],
+      recorder: row[5],
+      role: row[6]
+    };
 
-  return { result, setupWeightIPC, remarks, url };
+    // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataObj
+    remarksData.push(rowData);
+  });
+
+  const dataLists = {
+    "settingDetail": settingDetail,
+    "weighingData": weighingData.reverse(),
+    "remarksData": remarksData.reverse()
+  }
+
+  console.log(dataLists.settingDetail)
+  return dataLists;
 }
 
 // ลงชื่อผู้ตรวจสอบการตั้งค่า

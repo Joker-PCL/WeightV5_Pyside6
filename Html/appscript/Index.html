@@ -152,12 +152,12 @@
         </div>
       </div>
 
-      <div class="page active" data-toggle="weight_10s_page">
+      <div class="page" data-toggle="weight_10s_page">
         <p class="page-title">ตารางข้อมูลน้ำหนักยา 10 เม็ด</p>
         <div id="container10s" class="weight-container"></div>
       </div>
 
-      <div class="page" data-toggle="weight_ipc_page">
+      <div class="page active" data-toggle="weight_ipc_page">
         <p class="page-title">
           การควบคุมน้ำหนักเฉลี่ย (AVERAGE WEIGHT)
           <br />
@@ -375,6 +375,10 @@
           ],
         },
       });
+    
+      google.script.run.withSuccessHandler(productionLists=> {
+        weightIpc.createProductionLists(productionLists);
+      }).getProductionListsIpc();
     });
   </script>
 

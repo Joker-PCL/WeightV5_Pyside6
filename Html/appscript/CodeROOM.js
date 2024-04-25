@@ -57,15 +57,15 @@ function getProductionLists10s() {
 function getWeighingData_10s(url) {
   // const url = "https://docs.google.com/spreadsheets/d/1XySGAC8aaywquHFKwr_zBBDpOgj99CF15UHe3P3kYF8/edit?usp=sharing"
   const spreadsheet = SpreadsheetApp.openByUrl(url); // เข้าถึง Spreadsheet
-  const data_weighing = spreadsheet.getSheetByName(globalVariables().shWeight10s) // เข้าถึง sheet ชั่งน้ำหนัก
-    .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
-    .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
-    .slice(2); // ตัดข้อมูลส่วนหัวทิ้ง
-
   const data_setting = spreadsheet.getSheetByName(globalVariables().shSetWeight)  // เข้าถึง sheet ตั้งค่าน้ำหนักยา
     .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
     .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
     .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
+
+  const data_weighing = spreadsheet.getSheetByName(globalVariables().shWeight10s) // เข้าถึง sheet ชั่งน้ำหนัก
+    .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
+    .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
+    .slice(2); // ตัดข้อมูลส่วนหัวทิ้ง
 
   const data_remarks = spreadsheet.getSheetByName(globalVariables().shRemarks)  // เข้าถึง sheet remarks
     .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
@@ -116,7 +116,7 @@ function getWeighingData_10s(url) {
     weighingData.push(rowData);
   });
 
-// สร้างข้อมูลการ remarks
+  // สร้างข้อมูลการ remarks
   let remarksData = [];
   data_remarks.forEach((row) => {
     const rowData = {
