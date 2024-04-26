@@ -1,9 +1,15 @@
+<!-- Global variables -->
 <script>
   const role_definition = {
     Admin: "Admin",
     Superuser: "Superuser",
     Inspector: "Inspector",
     Operator: "Operator",
+  };
+
+  const storageKey = {
+    jsonWebToken: "jsonWebToken",
+    userData: "userData",
   };
 </script>
 
@@ -19,70 +25,70 @@
     }
 
     createMenu() {
-      const page1_menu = document.createElement("li");
-      page1_menu.setAttribute("data-toggle", "home_page");
-      page1_menu.classList.add("nav-item", "page-menu");
+      this.page1_menu = document.createElement("li");
+      this.page1_menu.setAttribute("data-toggle", "home_page");
+      this.page1_menu.classList.add("nav-item", "page-menu");
       const page1_title = document.createElement("a");
       page1_title.classList.add("nav-link");
       page1_title.textContent = "หน้าหลัก";
-      page1_menu.appendChild(page1_title);
+      this.page1_menu.appendChild(page1_title);
 
-      const page2_menu = document.createElement("li");
-      page2_menu.setAttribute("data-toggle", "weight_10s_page");
-      page2_menu.classList.add("nav-item", "page-menu");
+      this.page2_menu = document.createElement("li");
+      this.page2_menu.setAttribute("data-toggle", "weight_10s_page");
+      this.page2_menu.classList.add("nav-item", "page-menu");
       const page2_title = document.createElement("a");
       page2_title.classList.add("nav-link");
       page2_title.textContent = "ตารางข้อมูลน้ำหนักยา 10 เม็ด";
-      page2_menu.appendChild(page2_title);
+      this.page2_menu.appendChild(page2_title);
 
-      const page3_menu = document.createElement("li");
-      page3_menu.setAttribute("data-toggle", "weight_ipc_page");
-      page3_menu.classList.add("nav-item", "page-menu");
+      this.page3_menu = document.createElement("li");
+      this.page3_menu.setAttribute("data-toggle", "weight_ipc_page");
+      this.page3_menu.classList.add("nav-item", "page-menu");
       const page3_title = document.createElement("a");
       page3_title.classList.add("nav-link");
       page3_title.textContent = "ตารางข้อมูลน้ำหนักยา IPC";
-      page3_menu.appendChild(page3_title);
+      this.page3_menu.appendChild(page3_title);
 
-      const page4_menu = document.createElement("li");
-      page4_menu.setAttribute("data-toggle", "weighing_setup_page");
-      page4_menu.classList.add("nav-item", "page-menu");
+      this.page4_menu = document.createElement("li");
+      this.page4_menu.setAttribute("data-toggle", "weighing_setup_page");
+      this.page4_menu.classList.add("nav-item", "page-menu");
       const page4_title = document.createElement("a");
       page4_title.classList.add("nav-link");
       page4_title.textContent = "ตั้งค่าน้ำหนักยาของเครื่องตอก";
-      page4_menu.appendChild(page4_title);
+      this.page4_menu.appendChild(page4_title);
 
-      const page5_menu = document.createElement("li");
-      page5_menu.setAttribute("data-toggle", "weighing_database_page");
-      page5_menu.classList.add("nav-item", "page-menu");
+      this.page5_menu = document.createElement("li");
+      this.page5_menu.setAttribute("data-toggle", "weighing_database_page");
+      this.page5_menu.classList.add("nav-item", "page-menu");
       const page5_title = document.createElement("a");
       page5_title.classList.add("nav-link");
       page5_title.textContent = "แก้ไขฐานข้อมูลน้ำหนักยา";
-      page5_menu.appendChild(page5_title);
+      this.page5_menu.appendChild(page5_title);
 
-      const page6_menu = document.createElement("li");
-      page6_menu.setAttribute("data-toggle", "user_database_page");
-      page6_menu.classList.add("nav-item", "page-menu");
+      this.page6_menu = document.createElement("li");
+      this.page6_menu.setAttribute("data-toggle", "user_database_page");
+      this.page6_menu.classList.add("nav-item", "page-menu");
       const page6_title = document.createElement("a");
       page6_title.classList.add("nav-link");
       page6_title.textContent = "แก้ไขรายชื่อผู้ปฏิบัติงาน";
-      page6_menu.appendChild(page6_title);
+      this.page6_menu.appendChild(page6_title);
 
-      const page7_menu = document.createElement("li");
-      page7_menu.setAttribute("data-toggle", "data_logging_page");
-      page7_menu.classList.add("nav-item", "page-menu");
+      this.page7_menu = document.createElement("li");
+      this.page7_menu.setAttribute("data-toggle", "data_logging_page");
+      this.page7_menu.classList.add("nav-item", "page-menu");
       const page7_title = document.createElement("a");
       page7_title.classList.add("nav-link");
       page7_title.textContent = "บันทึกการปฏิบัติงาน";
-      page7_menu.appendChild(page7_title);
+      this.page7_menu.appendChild(page7_title);
 
       const pages_menu = [
-        page1_menu,
-        page2_menu,
-        page3_menu,
-        page4_menu,
-        page5_menu,
-        page6_menu,
-        page7_menu,
+        this.page1_menu,
+        this.page2_menu,
+        this.page3_menu,
+        this.page4_menu,
+        this.page5_menu,
+        this.page6_menu,
+        this.page7_menu,
       ];
 
       switch (this.role) {
@@ -96,7 +102,7 @@
           break;
         case "Inspector":
           pages_menu.splice(3);
-          pages_menu.push(page7_menu);
+          pages_menu.push(this.page7_menu);
           break;
         default:
           pages_menu.splice(1);
@@ -478,12 +484,19 @@
       this.url = this.searchUrl(this.currentListname);
 
       google.script.run
-        .withSuccessHandler((dataList) => {
+        .withSuccessHandler(({ result, dataset }) => {
           loadingPage("hide");
-          SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-          this.render(dataList);
+          if (result.message === "success") {
+            SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
+            this.render(dataset);
+          } else {
+            SwalMiniAlert.fire({ title: "ไม่สามารถอัพเดทข้อมูลได้" });
+          }
         })
-        .getWeighingData_10s(this.url);
+        .getWeighingData_10s(
+          localStorage.getItem(storageKey.jsonWebToken),
+          this.url
+        );
     }
 
     // จบการผลิต
@@ -586,7 +599,7 @@
     }
 
     // แสดงหน้าชั่งน้ำหนัก
-     render(dataset) {
+    render(dataset) {
       this.settingDetail = dataset.settingDetail;
       this.productName = this.settingDetail.productName;
       this.lot = this.settingDetail.lot;
@@ -1431,12 +1444,19 @@
       this.url = this.searchUrl(this.currentListname);
 
       google.script.run
-        .withSuccessHandler((dataList) => {
+        .withSuccessHandler(({ result, dataset }) => {
           loadingPage("hide");
-          SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-          this.render(dataList);
+          if (result.message === "success") {
+            SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
+            this.render(dataset);
+          } else {
+            SwalMiniAlert.fire({ title: "ไม่สามารถอัพเดทข้อมูลได้" });
+          }
         })
-        .getWeighingData_IPC(this.url);
+        .getWeighingData_IPC(
+          localStorage.getItem(storageKey.jsonWebToken),
+          this.url
+        );
     }
 
     // จบการผลิต
@@ -1507,7 +1527,7 @@
     }
 
     // แสดงผลข้อมูลการชั่งน้ำหนัก
-     render(dataset) {
+    render(dataset) {
       console.log(dataset);
       this.settingDetail = dataset.settingDetail;
       this.productName = this.settingDetail.productName;
@@ -1846,7 +1866,7 @@
       const tbody = document.createElement("tbody");
       let weights_cache = [];
 
-      rowData.weights.forEach(({timestamp, weight}) => {
+      rowData.weights.forEach(({ timestamp, weight }) => {
         const row = document.createElement("tr");
         const time_cell = document.createElement("td");
         time_cell.textContent = timestamp;
@@ -1978,22 +1998,23 @@
 
       const weighingData = this.weighingData;
 
-      const total_slide = weighingData.length;
-      const totalPages = parseInt(total_slide / 2);
+      const totalSlides = weighingData.length;
+      const totalPages = Math.ceil(totalSlides / 2);
 
-      for (let index = 0; index < total_slide; index++) {
+      for (let index = 0; index < totalSlides; index++) {
         const table_container = document.createElement("div");
         table_container.classList.add("slide");
 
         if (index == 0) {
           table_container.classList.add("active");
-          const tableId = `table${index}`;
-          const table1 = this.createTable(tableId, weighingData[index]);
-          table_container.appendChild(table1);
         }
 
+        const tableId = `table${index}`;
+        const table1 = this.createTable(tableId, weighingData[index]);
+        table_container.appendChild(table1);
+
         index += 1;
-        if (index <= total_slide) {
+        if (index < totalSlides) {
           const tableId = `table${index}`;
           const table2 = this.createTable(tableId, weighingData[index]);
           table_container.appendChild(table2);
@@ -2019,7 +2040,7 @@
       const page_info = document.createElement("div");
       page_info.classList.add("page-info");
       const page_info_text = document.createElement("a");
-      page_info_text.textContent = `หน้า 1 จาก ${totalPages} หน้า`;
+      page_info_text.textContent = `หน้า 1 จาก ${totalPages} หน้า ทั้งหมด ${totalSlides} รายการ`;
       page_info.appendChild(page_info_text);
       slide_controls.appendChild(page_info);
 
@@ -2030,7 +2051,6 @@
       let currentPage = 1;
       $(document).ready(function () {
         const weighing_slide = $(".container-slide>.slide");
-        const totalSlides = weighing_slide.length; // นับจำนวนสไลด์ทั้งหมด
         let currentPage = 1;
 
         function updateActiveSlide() {
@@ -2039,14 +2059,14 @@
         }
 
         $(slide_control_prev).on("click", function () {
-          currentPage = currentPage === 1 ? totalSlides : currentPage - 1;
-          page_info_text.textContent = `หน้า ${currentPage} จาก ${totalSlides} หน้า`;
+          currentPage = currentPage === 1 ? totalPages : currentPage - 1;
+          page_info_text.textContent = `หน้า ${currentPage} จาก ${totalPages} หน้า ทั้งหมด ${totalSlides} รายการ`;
           updateActiveSlide();
         });
 
         $(slide_control_next).on("click", function () {
-          currentPage = currentPage === totalSlides ? 1 : currentPage + 1;
-          page_info_text.textContent = `หน้า ${currentPage} จาก ${totalSlides} หน้า`;
+          currentPage = currentPage === totalPages ? 1 : currentPage + 1;
+          page_info_text.textContent = `หน้า ${currentPage} จาก ${totalPages} หน้า ทั้งหมด ${totalSlides} รายการ`;
           updateActiveSlide();
         });
       });
@@ -2137,13 +2157,10 @@
 <!-- ตั้งค่าน้ำหนักยาของเครื่องตอก -->
 <script>
   class CreateForm {
-    constructor(role, containerId, settingLists) {
+    constructor(role, containerId) {
       this.role = role;
       this.containerId = containerId;
       this.container = document.getElementById(this.containerId);
-      this.productLists = settingLists.productLists;
-      this.tabletLists = settingLists.tabletLists;
-      this.balanceLists = settingLists.balanceLists;
     }
 
     // ค้นหาข้อมูลการตั้งค่าจากรายชื่อยา
@@ -2165,7 +2182,12 @@
             const inputEl = $(formGroup10s).find(
               `.input-group>input[name="${key}"]`
             );
-            inputEl.val(value.replace("%", ""));
+
+            if(key === "percentWeightVariation10s" || key === "thickness10sMin" || key === "thickness10sMax") {
+              inputEl.val(parseFloat(value.replace("%", "")).toFixed(2));
+            } else {
+              inputEl.val(parseFloat(value).toFixed(3));
+            }
           }
         );
 
@@ -2174,7 +2196,12 @@
             const inputEl = $(formGroupIpc).find(
               `.input-group>input[name="${key}"]`
             );
-            inputEl.val(value.replace("%", ""));
+
+            if(key === "percentWeightVariationIpc") {
+              inputEl.val(parseFloat(value.replace("%", "")).toFixed(2));
+            } else {
+              inputEl.val(parseFloat(value).toFixed(3));
+            }
           }
         );
       } else {
@@ -2186,7 +2213,7 @@
     }
 
     // สร้างรายการจากชื่อยา
-    createDropdownProductList(element, dataSettings) {
+    createDropdownProductList(dataSettings) {
       if (dataSettings) {
         this.productLists = dataSettings;
       }
@@ -2197,7 +2224,7 @@
       });
 
       // สร้าง dropdown lists
-      $(element)
+      $(this.searchProductsEl)
         .autocomplete({
           source: datasource.sort(),
           autoFocus: false,
@@ -2215,7 +2242,7 @@
           $(this).data("ui-autocomplete").search($(this).val());
         });
 
-      $(element).on("input", (event) => {
+      $(this.searchProductsEl).on("input", (event) => {
         this.searchProduct(event.target.value);
       });
     }
@@ -2488,7 +2515,7 @@
           options: { placeholder: "น้ำหนัก...", step: "0.001" },
         },
         input2: {
-          id: "percentWeightIpc",
+          id: "percentWeightVariationIpc",
           type: "number",
           unit: "%",
           options: { placeholder: "% นน.", step: "0.01" },
@@ -2520,13 +2547,13 @@
         input1: {
           id: "meanWeightVariationIpcMin",
           type: "number",
-          unit: "mm.",
+          unit: "กรัม",
           options: { placeholder: "ต่ำสุด...", step: "0.001" },
         },
         input2: {
           id: "meanWeightVariationIpcMax",
           type: "number",
-          unit: "mm.",
+          unit: "กรัม",
           options: { placeholder: "สูงสุด.", step: "0.001" },
         },
       });
@@ -2538,13 +2565,13 @@
         input1: {
           id: "meanWeightRegIpcMin",
           type: "number",
-          unit: "mm.",
+          unit: "กรัม",
           options: { placeholder: "ต่ำสุด...", step: "0.001" },
         },
         input2: {
           id: "meanWeightRegIpcMax",
           type: "number",
-          unit: "mm.",
+          unit: "กรัม",
           options: { placeholder: "สูงสุด.", step: "0.001" },
         },
       });
@@ -2556,7 +2583,10 @@
     }
 
     // สร้างฟอร์มการตั้งค่าน้ำหนักยาของเครื่องตอก
-    createSetupForm() {
+    createSetupForm(settingLists) {
+      this.productLists = settingLists.productLists;
+      this.tabletLists = settingLists.tabletLists;
+      this.balanceLists = settingLists.balanceLists;
       const form = document.createElement("form");
       const search_group = document.createElement("div");
       search_group.classList.add("form-search-group");
@@ -2624,11 +2654,15 @@
       });
 
       this.searchProductsEl = $(productName)[0].firstChild;
-      this.createDropdownProductList(this.searchProductsEl);
+      this.createDropdownProductList();
     }
 
     // สร้างฟอร์มแก้ไขฐานข้อมูลน้ำหนักยา
-    createEditForm() {
+    createEditForm(settingLists) {
+      this.productLists = settingLists.productLists;
+      this.tabletLists = settingLists.tabletLists;
+      this.balanceLists = settingLists.balanceLists;
+
       const form = document.createElement("form");
       const search_group = document.createElement("div");
       search_group.classList.add("form-search-group");
@@ -2670,7 +2704,7 @@
       });
 
       this.searchProductsEl = $(productName)[0].firstChild;
-      this.createDropdownProductList(this.searchProductsEl);
+      this.createDropdownProductList();
     }
   }
 </script>
@@ -2678,9 +2712,8 @@
 <!-- แก้ไขรายชื่อผู้ปฏิบัติงาน -->
 <script>
   class CreateUserDataForm {
-    constructor(containerId, userDataLists) {
+    constructor(containerId) {
       this.container = document.getElementById(containerId);
-      this.userDataLists = userDataLists;
     }
 
     // ค้นหาข้อมูลผู้ใช้จากฐานข้อมูลในระบบ
@@ -2804,7 +2837,8 @@
     }
 
     // สร้างฟอร์ม
-    createFormUserData() {
+    createFormUserData(userDataLists) {
+      this.userDataLists = userDataLists;
       const form = document.createElement("form");
       const container_header = document.createElement("div");
       container_header.className = "form-header-group";
@@ -2989,16 +3023,6 @@
       this.tableId = options.tableId;
       this.title = options.title;
       this.headers = options.headers;
-
-      if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser ||
-        this.role === role_definition.Inspector
-      ) {
-        // google.script.run.withSuccessHandler((res)=>{
-        //     this.render(res);
-        // }).getAuditTrail_data();
-      }
     }
 
     // โหลดข้อมูล บันทึกการปฏิบัติงาน
@@ -3006,12 +3030,17 @@
       loadingPage("show");
 
       google.script.run
-        .withSuccessHandler((res) => {
+        .withSuccessHandler(({ result, dataset }) => {
           loadingPage("hide");
-          SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-          this.render(res);
+          if (result.message === "success") {
+            localStorage.setItem(storageKey.jsonWebToken, result.jsonWebToken);
+
+            this.render(dataset);
+          } else {
+            console.log(result.message);
+          }
         })
-        .getAuditTrail_data();
+        .getAuditTrail_data(localStorage.getItem(storageKey.jsonWebToken));
     }
 
     render(dataset) {

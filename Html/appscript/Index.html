@@ -1,110 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <base target="_top" />
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height,initial-scale=0.6, minimum-scale=0.6, maximum-scale=0.6"
+    />
+    <title>Table Display</title>
+    <!-- font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit:wght@300&display=swap"
+      rel="stylesheet"
+    />
 
-<head>
-  <base target="_top" />
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, height=device-height,initial-scale=0.6, minimum-scale=0.6, maximum-scale=0.6" />
-  <title>Table Display</title>
-  <!-- font -->
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300&display=swap" rel="stylesheet" />
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <!-- canvasjs -->
+    <script
+      type="text/javascript"
+      src="https://cdn.canvasjs.com/canvasjs.min.js"
+    ></script>
 
-  <!-- canvasjs -->
-  <script type="text/javascript" src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+    <!-- fontawesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <!-- autocomplete jquery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
 
-  <!-- fontawesome -->
-  <script src="https://kit.fontawesome.com/4a1626448e.js" crossorigin="anonymous"></script>
+    <!-- sweetalert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
 
-  <!-- autocomplete jquery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.2/moment.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css"
+    />
 
-  <!-- sweetalert2 -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <?!= include('CSS'); ?>
+  </head>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.2/moment.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+  <body>
+    <!-- loading data -->
+    <div class="loading-data">
+      <div class="loader">
+        <div class="loader_overlay"></div>
+        <div class="loader_cogs">
+          <div class="loader_cogs__top">
+            <div class="top_part"></div>
+            <div class="top_part"></div>
+            <div class="top_part"></div>
+            <div class="top_hole"></div>
+          </div>
+          <div class="loader_cogs__left">
+            <div class="left_part"></div>
+            <div class="left_part"></div>
+            <div class="left_part"></div>
+            <div class="left_hole"></div>
+          </div>
+          <div class="loader_cogs__bottom">
+            <div class="bottom_part"></div>
+            <div class="bottom_part"></div>
+            <div class="bottom_part"></div>
+            <div class="bottom_hole"></div>
+          </div>
+          <p>กำลังโหลดข้อมูล</p>
+        </div>
+      </div>
+    </div>
 
-  <?!= include('CSS'); ?>
-</head>
-
-<body>
-  <? var url = getUrl(); ?>
-
-  <!-- loading edit -->
-  <div class="loading-edit">
-    <svg xmlns="http://www.w3.org/2000/svg" height="200px" width="200px" viewBox="0 0 200 200" class="pencil">
-      <defs>
-        <clippath id="pencil-eraser">
-          <rect height="30" width="30" ry="5" rx="5"></rect>
-        </clippath>
-      </defs>
-      <circle transform="rotate(-113,100,100)" stroke-linecap="round" stroke-dashoffset="439.82"
-        stroke-dasharray="439.82 439.82" stroke-width="2" stroke="currentColor" fill="none" r="70"
-        class="pencil-stroke"></circle>
-      <g transform="translate(100,100)" class="pencil-rotate">
-        <g fill="none" class="pencil-body">
-          <circle transform="rotate(-90)" stroke-dashoffset="402" stroke-dasharray="402.12 402.12" stroke-width="30"
-            stroke="hsl(223,90%,50%)" r="64" class="pencil-body1"></circle>
-          <circle transform="rotate(-90)" stroke-dashoffset="465" stroke-dasharray="464.96 464.96" stroke-width="10"
-            stroke="hsl(223,90%,60%)" r="74" class="pencil-body2"></circle>
-          <circle transform="rotate(-90)" stroke-dashoffset="339" stroke-dasharray="339.29 339.29" stroke-width="10"
-            stroke="hsl(223,90%,40%)" r="54" class="pencil-body3"></circle>
-        </g>
-        <g transform="rotate(-90) translate(49,0)" class="pencil-eraser">
-          <g class="pencil-eraser-skew">
-            <rect height="30" width="30" ry="5" rx="5" fill="hsl(223,90%,70%)"></rect>
-            <rect clip-path="url(#pencil-eraser)" height="30" width="5" fill="hsl(223,90%,60%)"></rect>
-            <rect height="20" width="30" fill="hsl(223,10%,90%)"></rect>
-            <rect height="20" width="15" fill="hsl(223,10%,70%)"></rect>
-            <rect height="20" width="5" fill="hsl(223,10%,80%)"></rect>
-            <rect height="2" width="30" y="6" fill="hsla(223,10%,10%,0.2)"></rect>
-            <rect height="2" width="30" y="13" fill="hsla(223,10%,10%,0.2)"></rect>
+    <!-- loading edit -->
+    <div class="loading-edit">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="200px"
+        width="200px"
+        viewBox="0 0 200 200"
+        class="pencil"
+      >
+        <defs>
+          <clippath id="pencil-eraser">
+            <rect height="30" width="30" ry="5" rx="5"></rect>
+          </clippath>
+        </defs>
+        <circle
+          transform="rotate(-113,100,100)"
+          stroke-linecap="round"
+          stroke-dashoffset="439.82"
+          stroke-dasharray="439.82 439.82"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          r="70"
+          class="pencil-stroke"
+        ></circle>
+        <g transform="translate(100,100)" class="pencil-rotate">
+          <g fill="none" class="pencil-body">
+            <circle
+              transform="rotate(-90)"
+              stroke-dashoffset="402"
+              stroke-dasharray="402.12 402.12"
+              stroke-width="30"
+              stroke="hsl(223,90%,50%)"
+              r="64"
+              class="pencil-body1"
+            ></circle>
+            <circle
+              transform="rotate(-90)"
+              stroke-dashoffset="465"
+              stroke-dasharray="464.96 464.96"
+              stroke-width="10"
+              stroke="hsl(223,90%,60%)"
+              r="74"
+              class="pencil-body2"
+            ></circle>
+            <circle
+              transform="rotate(-90)"
+              stroke-dashoffset="339"
+              stroke-dasharray="339.29 339.29"
+              stroke-width="10"
+              stroke="hsl(223,90%,40%)"
+              r="54"
+              class="pencil-body3"
+            ></circle>
+          </g>
+          <g transform="rotate(-90) translate(49,0)" class="pencil-eraser">
+            <g class="pencil-eraser-skew">
+              <rect
+                height="30"
+                width="30"
+                ry="5"
+                rx="5"
+                fill="hsl(223,90%,70%)"
+              ></rect>
+              <rect
+                clip-path="url(#pencil-eraser)"
+                height="30"
+                width="5"
+                fill="hsl(223,90%,60%)"
+              ></rect>
+              <rect height="20" width="30" fill="hsl(223,10%,90%)"></rect>
+              <rect height="20" width="15" fill="hsl(223,10%,70%)"></rect>
+              <rect height="20" width="5" fill="hsl(223,10%,80%)"></rect>
+              <rect
+                height="2"
+                width="30"
+                y="6"
+                fill="hsla(223,10%,10%,0.2)"
+              ></rect>
+              <rect
+                height="2"
+                width="30"
+                y="13"
+                fill="hsla(223,10%,10%,0.2)"
+              ></rect>
+            </g>
+          </g>
+          <g transform="rotate(-90) translate(49,-30)" class="pencil-point">
+            <polygon points="15 0,30 30,0 30" fill="hsl(33,90%,70%)"></polygon>
+            <polygon points="15 0,6 30,0 30" fill="hsl(33,90%,50%)"></polygon>
+            <polygon
+              points="15 0,20 10,10 10"
+              fill="hsl(223,10%,10%)"
+            ></polygon>
           </g>
         </g>
-        <g transform="rotate(-90) translate(49,-30)" class="pencil-point">
-          <polygon points="15 0,30 30,0 30" fill="hsl(33,90%,70%)"></polygon>
-          <polygon points="15 0,6 30,0 30" fill="hsl(33,90%,50%)"></polygon>
-          <polygon points="15 0,20 10,10 10" fill="hsl(223,10%,10%)"></polygon>
-        </g>
-      </g>
-    </svg>
-  </div>
+      </svg>
+    </div>
 
-  <!-- loading page -->
-  <div class="loading-page">
-    <section class="loader">
-      <div class="slider" style="--i: 0"></div>
-      <div class="slider" style="--i: 1"></div>
-      <div class="slider" style="--i: 2"></div>
-      <div class="slider" style="--i: 3"></div>
-      <div class="slider" style="--i: 4"></div>
+    <!-- loading page -->
+    <div class="loading-page">
+      <section class="loader">
+        <div class="slider" style="--i: 0"></div>
+        <div class="slider" style="--i: 1"></div>
+        <div class="slider" style="--i: 2"></div>
+        <div class="slider" style="--i: 3"></div>
+        <div class="slider" style="--i: 4"></div>
 
-      <!-- <span>กำลังอัพเดทข้อมูล</span> -->
-    </section>
-  </div>
+        <!-- <span>กำลังอัพเดทข้อมูล</span> -->
+      </section>
+    </div>
 
-  <!-- loading trash -->
-  <div class="loading-trash">
-    <section>
-      <span class="trash">
+    <!-- loading trash -->
+    <div class="loading-trash">
+      <section>
+        <span class="trash">
           <span></span>
-      <i></i>
-      </span>
-    </section>
-  </div>
+          <i></i>
+        </span>
+      </section>
+    </div>
 
-  <main>
-    <nav class="navbar bg-primary sticky-top py-1">
-      <div class="container-fluid">
-        <a class="navbar-brand text-white fw-bold fs-2 ms-2">Polipharm</a>
-        <button
+    <!-- login -->
+    <?!= include('login'); ?>
+
+    <main class="d-none main-pages">
+      <nav class="navbar bg-primary sticky-top py-1">
+        <div class="container-fluid">
+          <a class="navbar-brand text-white fw-bold fs-2 ms-2">Polipharm</a>
+          <button
             class="navbar-toggler"
             type="button"
             data-bs-toggle="offcanvas"
@@ -113,317 +223,465 @@
           >
             <span class="navbar-toggler-icon"></span>
           </button>
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="sidebar_menu" aria-labelledby="sidebarLabel">
-          <div class="offcanvas-header">
-            <h4 class="offcanvas-title fw-bolder text-decoration-underline" id="sidebarLabel">
-              โปรแกรมบันทึกข้อมูลน้ำหนักยา
-            </h4>
-            <button
+          <div
+            class="offcanvas offcanvas-end"
+            tabindex="-1"
+            id="sidebar_menu"
+            aria-labelledby="sidebarLabel"
+          >
+            <div class="offcanvas-header">
+              <h4
+                class="offcanvas-title fw-bolder text-decoration-underline"
+                id="sidebarLabel"
+              >
+                โปรแกรมบันทึกข้อมูลน้ำหนักยา
+              </h4>
+              <button
                 type="button"
                 class="btn-close"
                 data-bs-dismiss="offcanvas"
                 aria-label="Close"
               ></button>
-          </div>
-          <div class="offcanvas-body" id="sidebar_body"></div>
-          <footer class="d-flex flex-row m-2">
-            <form method="post" action="<?= url ?>" autocomplete="off">
-              <input type="hidden" name="logout" value="logout"/>
-              <button type="submit" id="logout" class="btn btn-danger">
+            </div>
+            <div class="offcanvas-body" id="sidebar_body"></div>
+            <footer class="d-flex flex-row m-2">
+              <input type="hidden" name="logout" value="logout" />
+              <button type="button" id="logout" class="btn btn-danger">
                 ออกจากระบบ
               </button>
-            </form>
-          </footer>
-        </div>
-      </div>
-    </nav>
-
-    <section class="pages container-xxl">
-      <div class="page" data-toggle="home_page">
-        <div class="page-main-container">
-          <div id="home_page" class="page-container">
-            <p class="page-title">
-              ยินดีต้อนรับคุณ
-              <?= username; ?> สิทธิการใช้งาน
-              <?= role; ?>
-            </p>
-            <iframe style="border: none" src="https://whimsical.com/embed/RLsLUSn5w5v9VKw5bFDJbM"></iframe>
+            </footer>
           </div>
         </div>
-      </div>
+      </nav>
 
-      <div class="page" data-toggle="weight_10s_page">
-        <p class="page-title">ตารางข้อมูลน้ำหนักยา 10 เม็ด</p>
-        <div id="container10s" class="weight-container"></div>
-      </div>
-
-      <div class="page active" data-toggle="weight_ipc_page">
-        <p class="page-title">
-          การควบคุมน้ำหนักเฉลี่ย (AVERAGE WEIGHT)
-          <br />
-            และน้ำหนักเบี่ยงเบนของเม็ดยา (WEIGHT VARIATION)
-        </p>
-        <div id="containerIpc" class="weight-container"></div>
-      </div>
-
-      <div class="page" data-toggle="weighing_setup_page">
-        <div class="form-main-container">
-          <div id="weighing_setup" class="form-container">
-            <p class="page-title">ตั้งค่าน้ำหนักยาของเครื่องตอก</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="page" data-toggle="weighing_database_page">
-        <div class="form-main-container">
-          <div id="weighing_database" class="form-container">
-            <p class="page-title">แก้ไขฐานข้อมูลน้ำหนักยา</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="page" data-toggle="user_database_page">
-        <div class="form-main-container">
-          <div id="user_edit" class="form-container">
-            <p class="page-title">แก้ไขรายชื่อผู้ปฏิบัติงาน</p>
-
-            <div class="form-detail">
-              <ol>
-                <li class="lh-lg">
-                  ต้องการแก้ไขข้อมูลให้ทำการเลือกที่ รายชือพนักงาน
-                </li>
-                <li class="lh-lg">
-                  ต้องการเพิ่มข้อมูลให้กรอกข้อมูลแล้วกดบันทึก
-                </li>
-                <li class="lh-lg">
-                  ต้องการลบข้อมูลให้ทำการเลือกที่ รายชือพนักงาน
-                  แล้วกดลบผู้ใช้งาน
-                </li>
-                <li class="lh-lg">ต้องการเคลียร์ฟอร์มกดยกเลิก</li>
-              </ol>
+      <section class="pages container-xxl">
+        <div class="page active" data-toggle="home_page">
+          <div class="page-main-container">
+            <div id="home_page" class="page-container">
+              <p class="page-title">ยินดีต้อนรับคุณ สิทธิการใช้งาน</p>
+              <iframe
+                style="border: none"
+                src="https://whimsical.com/embed/RLsLUSn5w5v9VKw5bFDJbM"
+              ></iframe>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="page" data-toggle="data_logging_page">
-        <p class="page-title">บันทึกการปฏิบัติงาน</p>
-        <div id="data_logging" class="dataLogging-container"></div>
-      </div>
-    </section>
-  </main>
+        <div class="page" data-toggle="weight_10s_page">
+          <p class="page-title">ตารางข้อมูลน้ำหนักยา 10 เม็ด</p>
+          <div id="container10s" class="weight-container"></div>
+        </div>
 
-  <!-- ตั้งค่า DataTable -->
-  <script>
-    const setupTable = {
-      // กำหนดเมนูแสดงจำนวนแถว
-      lengthMenu: [
-        [5, 10, 15, 20, 50, 100, -1],
-        ["5", "10", "15", "20", "50", "100", "ทั้งหมด"],
-      ],
+        <div class="page" data-toggle="weight_ipc_page">
+          <p class="page-title">
+            การควบคุมน้ำหนักเฉลี่ย (AVERAGE WEIGHT)
+            <br />
+            และน้ำหนักเบี่ยงเบนของเม็ดยา (WEIGHT VARIATION)
+          </p>
+          <div id="containerIpc" class="weight-container"></div>
+        </div>
 
-      // columnDefs: [
-      //     { "orderable": false, "targets": [1, 2, 3, 4, 5, 6] },
-      // ],
+        <div class="page" data-toggle="weighing_setup_page">
+          <div class="form-main-container">
+            <div id="weighing_setup" class="form-container">
+              <p class="page-title">ตั้งค่าน้ำหนักยาของเครื่องตอก</p>
+            </div>
+          </div>
+        </div>
 
-      ordering: false,
-      // order: [[0, "desc"]],
-      iDisplayLength: 10,
-      responsive: true,
+        <div class="page" data-toggle="weighing_database_page">
+          <div class="form-main-container">
+            <div id="weighing_database" class="form-container">
+              <p class="page-title">แก้ไขฐานข้อมูลน้ำหนักยา</p>
+            </div>
+          </div>
+        </div>
 
-      //ภาษาไทย
-      language: {
-        sLengthMenu: "แสดง _MENU_ รายการ",
-        sZeroRecords: "ไม่พบข้อมูล",
-        sInfo: "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
-        sInfoEmpty: "แสดง 0 ถึง 0 จาก 0 รายการ",
-        sInfoFiltered: "(กรองข้อมูลจาก _MAX_ รายการ)",
-        sInfoPostFix: "",
-        sSearch: "ค้นหา:",
-        sUrl: "",
-        oPaginate: {
-          sFirst: "หน้าแรก",
-          sPrevious: "ก่อนหน้า",
-          sNext: "ถัดไป",
-          sLast: "หน้าสุดท้าย",
+        <div class="page" data-toggle="user_database_page">
+          <div class="form-main-container">
+            <div id="user_edit" class="form-container">
+              <p class="page-title">แก้ไขรายชื่อผู้ปฏิบัติงาน</p>
+
+              <div class="form-detail">
+                <ol>
+                  <li class="lh-lg">
+                    ต้องการแก้ไขข้อมูลให้ทำการเลือกที่ รายชือพนักงาน
+                  </li>
+                  <li class="lh-lg">
+                    ต้องการเพิ่มข้อมูลให้กรอกข้อมูลแล้วกดบันทึก
+                  </li>
+                  <li class="lh-lg">
+                    ต้องการลบข้อมูลให้ทำการเลือกที่ รายชือพนักงาน
+                    แล้วกดลบผู้ใช้งาน
+                  </li>
+                  <li class="lh-lg">ต้องการเคลียร์ฟอร์มกดยกเลิก</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page" data-toggle="data_logging_page">
+          <p class="page-title">บันทึกการปฏิบัติงาน</p>
+          <div id="data_logging" class="dataLogging-container"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ตั้งค่า DataTable -->
+    <script>
+      const setupTable = {
+        // กำหนดเมนูแสดงจำนวนแถว
+        lengthMenu: [
+          [5, 10, 15, 20, 50, 100, -1],
+          ["5", "10", "15", "20", "50", "100", "ทั้งหมด"],
+        ],
+
+        // columnDefs: [
+        //     { "orderable": false, "targets": [1, 2, 3, 4, 5, 6] },
+        // ],
+
+        ordering: false,
+        // order: [[0, "desc"]],
+        iDisplayLength: 10,
+        responsive: true,
+
+        //ภาษาไทย
+        language: {
+          sLengthMenu: "แสดง _MENU_ รายการ",
+          sZeroRecords: "ไม่พบข้อมูล",
+          sInfo: "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+          sInfoEmpty: "แสดง 0 ถึง 0 จาก 0 รายการ",
+          sInfoFiltered: "(กรองข้อมูลจาก _MAX_ รายการ)",
+          sInfoPostFix: "",
+          sSearch: "ค้นหา:",
+          sUrl: "",
+          oPaginate: {
+            sFirst: "หน้าแรก",
+            sPrevious: "ก่อนหน้า",
+            sNext: "ถัดไป",
+            sLast: "หน้าสุดท้าย",
+          },
         },
-      },
-    };
+      };
 
-    // // จัดเรียงข้อมูล DataTable ตามวันที่มากไปน้อย
-    // $(document).ready(function () {
-    //   DataTable.datetime("DD/MM/YYYY, HH:mm:ss");
-    // });
-  </script>
+      // // จัดเรียงข้อมูล DataTable ตามวันที่มากไปน้อย
+      // $(document).ready(function () {
+      //   DataTable.datetime("DD/MM/YYYY, HH:mm:ss");
+      // });
+    </script>
 
-  <?!= include('dataTest'); ?>
-  <?!= include('JS'); ?>
+    <?!= include('dataTest'); ?>
+    <?!= include('JS'); ?>
 
-  <!-- สร้างเมนูตามสิทธิ์การใช้งาน -->
-  <script>
-    $(document).ready(function () {
-      const sidebar_body = document.getElementById("sidebar_body");
-      const menu_lists = new CreateSidebarMenu(<?= role; ?>);
-      sidebar_body.appendChild(menu_lists.lists);
+    <!-- สร้างเมนูตามสิทธิ์การใช้งาน, ออกจากระบบ -->
+    <script>
+      function createSidebarMenu(userData) {
+        const welcomeEl = document.querySelector("#home_page>.page-title");
+        welcomeEl.innerHTML = `ยินดีต้อนรับคุณ ${userData.nameTH} สิทธิการใช้งาน ${userData.role}`;
+        const sidebar_body = document.getElementById("sidebar_body");
+        const menu_lists = new CreateSidebarMenu(userData.role);
+        sidebar_body.appendChild(menu_lists.lists);
 
-      const sidebar_menu = new bootstrap.Offcanvas("#sidebar_menu");
-      // ซ่อนและแสดงหน้า
-      $(".page-menu").on("click", function () {
-        sidebar_menu.hide();
-        const currentPage = $(this).attr("data-toggle");
-        $(".pages>.page").each(function () {
-          const page = $(this).attr("data-toggle");
-          if (currentPage === page) {
-            $(this).fadeIn(500);
-            $(this).addClass("active");
-            window.scrollTo(0, 0);
-          } else {
-            $(this).removeClass("active");
-            $(this).hide();
-          }
+        const sidebar_menu = new bootstrap.Offcanvas("#sidebar_menu");
+
+        // ซ่อนและแสดงหน้า
+        $(".page-menu").on("click", function () {
+          sidebar_menu.hide();
+          const currentPage = $(this).attr("data-toggle");
+          $(".pages>.page").each(function () {
+            const page = $(this).attr("data-toggle");
+            if (currentPage === page) {
+              $(this).fadeIn(500);
+              $(this).addClass("active");
+              window.scrollTo(0, 0);
+            } else {
+              $(this).removeClass("active");
+              $(this).hide();
+            }
+          });
         });
-      });
-    });
-  </script>
 
-  <!-- สร้างหน้าชั่งน้ำหนัก 10 เม็ด(สิทธิ์การใช้งาน) -->
-  <script>
-    $(document).ready(function () {
-      // Create an instance of Table10s
-      const weight10s = new Weighing10s(<?= role; ?>, "container10s", {
-        setupTable: setupTable,
+        // สร้างหน้าข้อมูลการชั่งน้ำหนัก 10 เม็ด
+        $(menu_lists.page2_menu).on("click", function () {
+          createWeighing10sDataPage(userData.role);
+        });
 
-        // ข้อมูลการชั่งน้ำหนัก 10 เม็ด
-        weighing: {
-          weighingID: "weight_10s",
-          weigtingTitle: "ตารางบันทึกบันทึกค่าน้ำหนัก 10 เม็ด 2 ครั้งทุก 30 นาที",
-          weigtingHeaders: [
-            { timestamp: "วันที่,เวลา" },
-            { type: "TYPE" },
-            { weight1: "ครั้งที่ 1" },
-            { weight2: "ครั้งที่ 2" },
-            { average: "นน.เฉลี่ย" },
-            { percent: "%นน.เฉลี่ย" },
-            { characteristics: "ลักษณะเม็ด" },
-            { operator: "ผู้ปฏิบัติ" },
-            { inspector: "ผู้ตรวจสอบ" },
-          ],
+        // สร้างหน้าข้อมูลการชั่งน้ำหนัก ipc
+        $(menu_lists.page3_menu).on("click", function () {
+          createWeighingIpcDataPage(userData.role);
+        });
 
-          thicknessID: "thickness_10s",
-          thicknessTitle: "ตารางบันทึกค่าความหนาของเม็ดยา ทุก 2 ชั่วโมง",
-          thicknessHeaders: [
-            { timestamp: "วันที่,เวลา" },
-            { thickness1: "1" },
-            { thickness2: "2" },
-            { thickness3: "3" },
-            { thickness4: "4" },
-            { thickness5: "5" },
-            { thickness6: "6" },
-            { thickness7: "7" },
-            { thickness8: "8" },
-            { thickness9: "9" },
-            { thickness10: "10" },
-          ],
-        },
+        // สร้างหน้าตั้งค่าน้ำหนักยาของเครื่องตอก
+        $(menu_lists.page4_menu).on("click", function () {
+          createWeighingSetupAndEdit(userData.role);
+        });
 
-        // Remarks
-        remarks: {
-          id: "remarks_weight_10s",
-          title: "Remarks",
-          headers: [
-            { timestamp: "วันที่/เวลา" },
-            { issues: "เหตุการที่เกิดการเปลี่ยนแปลง" },
-            { cause: "สาเหตุ" },
-            { resolve: "การแก้ไข" },
-            { notes: "หมายเหตุ" },
-            { recorder: "ผู้บันทึก" },
-            { role: "สิทธิ์" },
-          ],
-        },
-      });
+        // สร้างหน้าแก้ไขฐานข้อมูลน้ำหนักยา
+        $(menu_lists.page5_menu).on("click", function () {
+          createWeighingSetupAndEdit(userData.role);
+        });
 
-      google.script.run.withSuccessHandler(productionLists=> {
-        weight10s.createProductionLists(productionLists);
-      }).getProductionLists10s();
-    });
-  </script>
+        // สร้างหน้าแก้ไขรายชื่อผู้ปฏิบัติงาน
+        $(menu_lists.page6_menu).on("click", function () {
+          createWeighingSetupAndEdit(userData.role);
+        });
 
-  <!-- สร้างหน้าชั่งน้ำหนัก ipc(สิทธิ์การใช้งาน) -->
-  <script>
-    $(document).ready(function () {
-      // Create an instance of ipc
-      const weightIpc = new WeighingIpc(<?= role; ?>, "containerIpc", {
-        setupTable: setupTable,
-
-        // ข้อมูลการชั่งน้ำหนัก 10 เม็ด
-        weighing: {
-          weighingID: "weight_ipc",
-        },
-
-        // Remarks
-        remarks: {
-          id: "remarks_weight_ipc",
-          title: "Remarks",
-          headers: [
-            { timestamp: "วันที่/เวลา" },
-            { issues: "เหตุการที่เกิดการเปลี่ยนแปลง" },
-            { cause: "สาเหตุ" },
-            { resolve: "การแก้ไข" },
-            { notes: "หมายเหตุ" },
-            { recorder: "ผู้บันทึก" },
-            { role: "สิทธิ์" },
-          ],
-        },
-      });
-    
-      google.script.run.withSuccessHandler(productionLists=> {
-        weightIpc.createProductionLists(productionLists);
-      }).getProductionListsIpc();
-    });
-  </script>
-
-  <!-- สร้างหน้าตั้งค่าน้ำหนักยาของเครื่องตอก, แก้ไขฐานข้อมูลน้ำหนักยา -->
-  <script>
-    $(document).ready(function () {
-      if(
-        <?= role; ?> === role_definition.Admin || 
-        <?= role; ?> === role_definition.Superuser
-      )
-      {
-        google.script.run.withSuccessHandler(dataSettings=> {
-          const form_weighing_setup = new CreateForm(<?= role; ?>, "weighing_setup", dataSettings);
-          form_weighing_setup.createSetupForm();
-
-          const form_weighing_database = new CreateForm(<?= role; ?>, "weighing_database", dataSettings);
-          form_weighing_database.createEditForm();
-
-          const form_userData = new CreateUserDataForm("user_edit", dataSettings.userLists).createFormUserData();
-        }).getDataSetting();
+        // สร้างหน้าบันทึกการปฏิบัติงาน
+        $(menu_lists.page7_menu).on("click", function () {
+          createDataLogging(userData.role);
+        });
       }
-    });
-  </script>
 
-  <!-- สร้างหน้าบันทึกการปฏิบัติงาน -->
-  <script>
-    $(document).ready(function () {
-      const dataLogging = new CreateDataLogging(<?= role; ?>, "data_logging", {
-        setupTable: setupTable,
-        title: "บันทึกการปฎิบัติงาน",
-        tableId: "dataLoggingTable",
-        headers: {
-          datetime: "วันที่/เวลา",
-          list: "รายการ",
-          details: "รายละเอียด",
-          recorder: "ผู้บันทึก",
-          role: "สิทธิ์การเข้าถึง",
-        },
-      });
-    });
-  </script>
+      // ออกจากระบบ
+      $("#logout").click(logout);
 
-  <!-- loading, success, failed -->
-  <script>
-    function loadingPage(command) {
+      function logout() {
+        localStorage.clear();
+        const link = document.createElement("a");
+        link.href = "<?!= getUrl(); ?>";
+        link.click();
+      }
+    </script>
+
+    <!-- สร้างหน้าชั่งน้ำหนัก 10 เม็ด(สิทธิ์การใช้งาน) -->
+    <script>
+      let createWeighing10sDataPageState = false;
+      function createWeighing10sDataPage(role) {
+        // Create an instance of Table10s
+        if (!createWeighing10sDataPageState) {
+          loadingData("show");
+          const weight10s = new Weighing10s(role, "container10s", {
+            setupTable: setupTable,
+
+            // ข้อมูลการชั่งน้ำหนัก 10 เม็ด
+            weighing: {
+              weighingID: "weight_10s",
+              weigtingTitle:
+                "ตารางบันทึกบันทึกค่าน้ำหนัก 10 เม็ด 2 ครั้งทุก 30 นาที",
+              weigtingHeaders: [
+                { timestamp: "วันที่,เวลา" },
+                { type: "TYPE" },
+                { weight1: "ครั้งที่ 1" },
+                { weight2: "ครั้งที่ 2" },
+                { average: "นน.เฉลี่ย" },
+                { percent: "%นน.เฉลี่ย" },
+                { characteristics: "ลักษณะเม็ด" },
+                { operator: "ผู้ปฏิบัติ" },
+                { inspector: "ผู้ตรวจสอบ" },
+              ],
+
+              thicknessID: "thickness_10s",
+              thicknessTitle: "ตารางบันทึกค่าความหนาของเม็ดยา ทุก 2 ชั่วโมง",
+              thicknessHeaders: [
+                { timestamp: "วันที่,เวลา" },
+                { thickness1: "1" },
+                { thickness2: "2" },
+                { thickness3: "3" },
+                { thickness4: "4" },
+                { thickness5: "5" },
+                { thickness6: "6" },
+                { thickness7: "7" },
+                { thickness8: "8" },
+                { thickness9: "9" },
+                { thickness10: "10" },
+              ],
+            },
+
+            // Remarks
+            remarks: {
+              id: "remarks_weight_10s",
+              title: "Remarks",
+              headers: [
+                { timestamp: "วันที่/เวลา" },
+                { issues: "เหตุการที่เกิดการเปลี่ยนแปลง" },
+                { cause: "สาเหตุ" },
+                { resolve: "การแก้ไข" },
+                { notes: "หมายเหตุ" },
+                { recorder: "ผู้บันทึก" },
+                { role: "สิทธิ์" },
+              ],
+            },
+          });
+          google.script.run
+            .withSuccessHandler(({ result, productionLists }) => {
+              loadingData("hide");
+              if (result.message === "success") {
+                localStorage.setItem(
+                  storageKey.jsonWebToken,
+                  result.jsonWebToken
+                );
+                weight10s.createProductionLists(productionLists);
+              } else {
+                console.log(result.message);
+                logout();
+              }
+            })
+            .getProductionLists10s(
+              localStorage.getItem(storageKey.jsonWebToken)
+            );
+
+          createWeighing10sDataPageState = true;
+        }
+      }
+    </script>
+
+    <!-- สร้างหน้าชั่งน้ำหนัก ipc(สิทธิ์การใช้งาน) -->
+    <script>
+      let createWeighingIpcDataPageState = false;
+      function createWeighingIpcDataPage(role) {
+        // Create an instance of ipc
+        if (!createWeighingIpcDataPageState) {
+          loadingData("show");
+          const weightIpc = new WeighingIpc(role, "containerIpc", {
+            setupTable: setupTable,
+
+            // ข้อมูลการชั่งน้ำหนัก 10 เม็ด
+            weighing: {
+              weighingID: "weight_ipc",
+            },
+
+            // Remarks
+            remarks: {
+              id: "remarks_weight_ipc",
+              title: "Remarks",
+              headers: [
+                { timestamp: "วันที่/เวลา" },
+                { issues: "เหตุการที่เกิดการเปลี่ยนแปลง" },
+                { cause: "สาเหตุ" },
+                { resolve: "การแก้ไข" },
+                { notes: "หมายเหตุ" },
+                { recorder: "ผู้บันทึก" },
+                { role: "สิทธิ์" },
+              ],
+            },
+          });
+
+          google.script.run
+            .withSuccessHandler(({ result, productionLists }) => {
+              loadingData("hide");
+              if (result.message === "success") {
+                localStorage.setItem(
+                  storageKey.jsonWebToken,
+                  result.jsonWebToken
+                );
+                weightIpc.createProductionLists(productionLists);
+              } else {
+                console.log(result.message);
+                logout();
+              }
+            })
+            .getProductionListsIpc(
+              localStorage.getItem(storageKey.jsonWebToken)
+            );
+
+          createWeighingIpcDataPageState = true;
+        }
+      }
+    </script>
+
+    <!-- สร้างหน้าตั้งค่าน้ำหนักยาของเครื่องตอก, แก้ไขฐานข้อมูลน้ำหนักยา -->
+    <script>
+      let createWeighingSetupAndEditState = false;
+      function createWeighingSetupAndEdit(role) {
+        if (!createWeighingSetupAndEditState) {
+          if (
+            role === role_definition.Admin ||
+            role === role_definition.Superuser
+          ) {
+            // สร้างฟอร์มตั้งค่าน้ำหนักยาของเครื่องตอก
+            const form_weighing_setup = new CreateForm(role, "weighing_setup");
+
+            // สร้างฟอร์มแก้ไขฐานข้อมูลน้ำหนักยา
+            const form_weighing_database = new CreateForm(
+              role,
+              "weighing_database"
+            );
+
+            // สร้างฟอร์มแก้ไขรายชื่อผู้ปฏิบัติงาน
+            const form_userData = new CreateUserDataForm("user_edit");
+
+            loadingData("show");
+
+            google.script.run
+              .withSuccessHandler(({ result, dataSettings }) => {
+                // สร้างฟอร์มตั้งค่าน้ำหนักยาของเครื่องตอก
+                if (result.message === "success") {
+                  localStorage.setItem(
+                    storageKey.jsonWebToken,
+                    result.jsonWebToken
+                  );
+                form_weighing_setup.createSetupForm(dataSettings);
+
+                // สร้างฟอร์มแก้ไขฐานข้อมูลน้ำหนักยา
+                form_weighing_database.createEditForm(dataSettings);
+
+                // สร้างฟอร์มแก้ไขรายชื่อผู้ปฏิบัติงาน
+                form_userData.createFormUserData(dataSettings.userLists);
+                loadingData("hide");
+                } else {
+                  console.log(result.message);
+                  logout();
+                }
+              })
+              .getDataSetting(localStorage.getItem(storageKey.jsonWebToken));
+          }
+
+          createWeighingSetupAndEditState = true;
+        }
+      }
+    </script>
+
+    <!-- สร้างหน้าบันทึกการปฏิบัติงาน -->
+    <script>
+      let createDataLoggingState = false;
+      function createDataLogging(role) {
+        if (!createDataLoggingState) {
+          if (
+            role === role_definition.Admin ||
+            role === role_definition.Superuser ||
+            role === role_definition.inspector
+          ) {
+            const dataLogging = new CreateDataLogging(role, "data_logging", {
+              setupTable: setupTable,
+              title: "บันทึกการปฎิบัติงาน",
+              tableId: "dataLoggingTable",
+              headers: {
+                datetime: "วันที่/เวลา",
+                list: "รายการ",
+                details: "รายละเอียด",
+                recorder: "ผู้บันทึก",
+                role: "สิทธิ์การเข้าถึง",
+              },
+            });
+            
+            loadingData("show");
+            google.script.run
+              .withSuccessHandler(({ result, dataset }) => {
+                loadingData("hide");
+                if (result.message === "success") {
+                  localStorage.setItem(
+                    storageKey.jsonWebToken,
+                    result.jsonWebToken
+                  );
+
+                  dataLogging.render(dataset);
+                } else {
+                  console.log(result.message);
+                  logout();
+                }
+              })
+              .getAuditTrail_data(localStorage.getItem(storageKey.jsonWebToken));
+
+            createDataLoggingState = false;
+          }
+        }
+      }
+    </script>
+
+    <!-- loading, success, failed -->
+    <script>
+      function loadingPage(command) {
         switch (command) {
           case "show":
             $(".loading-page").fadeIn();
@@ -432,6 +690,7 @@
             $(".loading-page").fadeOut();
             break;
           default:
+            $(".loading-page").hide();
             break;
         }
       }
@@ -445,6 +704,7 @@
             $(".loading-trash").fadeOut();
             break;
           default:
+            $(".loading-trash").hide();
             break;
         }
       }
@@ -458,6 +718,21 @@
             $(".loading-edit").fadeOut();
             break;
           default:
+            $(".loading-edit").hide();
+            break;
+        }
+      }
+
+      function loadingData(command) {
+        switch (command) {
+          case "show":
+            $(".loading-data").fadeIn();
+            break;
+          case "hide":
+            $(".loading-data").fadeOut();
+            break;
+          default:
+            $(".loading-data").hide();
             break;
         }
       }
@@ -487,19 +762,22 @@
         timer: 3000,
         timerProgressBar: true,
       });
-  </script>
+    </script>
 
-  <!--Js Datatable-->
-  <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <!--Js Datatable-->
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
 
-  <!--Js Bootstrap-->
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-    integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous">
-  </script>
+    <!--Js Bootstrap-->
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+      crossorigin="anonymous"
+    ></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-    integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous">
-  </script>
-</body>
-
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+      integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+      crossorigin="anonymous"
+    ></script>
+  </body>
 </html>

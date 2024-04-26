@@ -1,21 +1,35 @@
 // ดึงข้อมูล Main_Setup สำหรับการตั้งค่าทั้งหมด
-function getDataSetting() {
-  const verifyToken = validateToken();
+function getDataSetting(jwtToken) {
+  const verifyToken = validateToken(jwtToken);
 
   if (verifyToken.message !== "success") {
-    return;
-  }
-  else {
+    return { result: verifyToken };
+  } else {
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheetUsers = spreadsheet.getSheetByName(globalVariables().shUserList);
-    const sheetTablet = spreadsheet.getSheetByName(globalVariables().shTabetList);
-    const sheetScale = spreadsheet.getSheetByName(globalVariables().shScaleList);
-    const sheetProductName = spreadsheet.getSheetByName(globalVariables().shProductNameList);
+    const sheetTablet = spreadsheet.getSheetByName(
+      globalVariables().shTabetList
+    );
+    const sheetScale = spreadsheet.getSheetByName(
+      globalVariables().shScaleList
+    );
+    const sheetProductName = spreadsheet.getSheetByName(
+      globalVariables().shProductNameList
+    );
 
     const userDataLists = sheetUsers.getDataRange().getDisplayValues().slice(2);
-    const tabletDataLists = sheetTablet.getDataRange().getDisplayValues().slice(1);
-    const balanceDataLists = sheetScale.getDataRange().getDisplayValues().slice(1);
-    const productNameDataLists = sheetProductName.getDataRange().getDisplayValues().slice(2);
+    const tabletDataLists = sheetTablet
+      .getDataRange()
+      .getDisplayValues()
+      .slice(1);
+    const balanceDataLists = sheetScale
+      .getDataRange()
+      .getDisplayValues()
+      .slice(1);
+    const productNameDataLists = sheetProductName
+      .getDataRange()
+      .getDisplayValues()
+      .slice(2);
 
     /** สร้างข้อมูลรายชื่อผู้ใช้งาน **/
     let userLists = {}; // สร้าง data object เก็บข้อมูล
@@ -37,8 +51,8 @@ function getDataSetting() {
     tabletDataLists.forEach((row) => {
       const tabletID = row[0];
       const tabletList = {
-        "url_10s": row[3],
-        "url_ipc": row[5],
+        url_10s: row[3],
+        url_ipc: row[5],
       };
 
       // เพิ่มข้อมูล user_data_list ไปยัง userList
@@ -55,7 +69,7 @@ function getDataSetting() {
     /** สร้างข้อมูลรายชื่อยา **/
     let productLists = {}; // สร้าง data object เก็บข้อมูล
     productNameDataLists.forEach((row) => {
-      const dataList = {}
+      const dataList = {};
       const productName = row[0].toUpperCase();
       // ตั้งค่าข้อมูลน้ำหนักยาแบบชั่ง 10 เม็ด
       const weight_control_10s = {
@@ -66,18 +80,18 @@ function getDataSetting() {
         meanWeightReg10sMin: row[5],
         meanWeightReg10sMax: row[6],
         thickness10sMin: row[7],
-        thickness10sMax: row[8]
+        thickness10sMax: row[8],
       };
 
       const weight_control_ipc = {
         meanWeightIpc: row[9],
-        percentWeightIpc: row[10],
+        percentWeightVariationIpc: row[10],
         meanWeightAverageIpcMin: row[11],
         meanWeightAverageIpcMax: row[12],
         meanWeightVariationIpcMin: row[13],
         meanWeightVariationIpcMax: row[14],
         meanWeightRegIpcMin: row[15],
-        meanWeightRegIpcMax: row[16]
+        meanWeightRegIpcMax: row[16],
       };
 
       // เพิ่มข้อมูล user_data_list ไปยัง userList
@@ -87,15 +101,14 @@ function getDataSetting() {
       productLists[productName] = dataList;
     });
 
-    const data = {
-      "userLists": userLists,
-      "tabletLists": tabletLists,
-      "balanceLists": balanceLists,
-      "productLists": productLists
+    const dataSettings = {
+      userLists: userLists,
+      tabletLists: tabletLists,
+      balanceLists: balanceLists,
+      productLists: productLists,
     };
 
-    console.log(data.userLists)
-    return data;
+    return { result: verifyToken, dataSettings: dataSettings };
   }
 }
 
@@ -105,15 +118,15 @@ function getSheetUrl(tabletID) {
   let shTabetList = ssMain.getSheetByName(globalVariables().shTabetList);
 
   let dataLists = shTabetList.getDataRange().getDisplayValues().slice(1);
-  let datalist = dataLists.find(data => {
+  let datalist = dataLists.find((data) => {
     return tabletID == data[0];
   });
 
   if (datalist) {
     let url = {
       url10s: datalist[3],
-      urlIPC: datalist[5]
-    }
+      urlIPC: datalist[5],
+    };
     return url;
   }
 
@@ -121,14 +134,16 @@ function getSheetUrl(tabletID) {
 }
 
 // ดึงข้อมูล Audit_trail รายละเอียดการปฏิบัติงาน
-function getAuditTrail_data() {
-  const verifyToken = verifyToken();
-  if (verifyToken.message === "success") {
+function getAuditTrail_data(jwtToken) {
+  const verifyToken = validateToken(jwtToken);
+  if (verifyToken.message !== "success") {
+    return { result: verifyToken };
+  } else {
     let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = spreadsheet.getSheetByName(globalVariables().shAudit_log);
     let data = sheet.getDataRange().getDisplayValues().slice(2);
 
-    let dataObj = {}
+    let dataset = {};
     data.forEach((row) => {
       const timestamp = row[0];
       const rowData = {
@@ -138,27 +153,24 @@ function getAuditTrail_data() {
         role: row[4],
       };
 
-      // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataObj
-      dataObj[timestamp] = rowData;
+      // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataset
+      dataset[timestamp] = rowData;
     });
 
-    console.log(dataObj)
-
-    return dataObj;
+    return {result: verifyToken, dataset: dataset};
   }
-  else {
-    return;
-  }
-};
+}
 
 // บันทึกการปฏิบัติงาน audit trail
 function audit_trail(list, detail, username) {
   let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = spreadsheet.getSheetByName(globalVariables().shAudit_log);
-  let today = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Jakarta' });
+  let today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Jakarta" });
 
   sheet.appendRow([today, list, detail, username]);
-  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+  sheet
+    .getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns())
+    .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
 }
 
 // บันทึก remarks
@@ -173,7 +185,7 @@ function recordRemarks(form) {
     form.causes,
     form.amendments,
     form.note,
-    form.usernameLC
+    form.usernameLC,
   ];
 
   // บันทึกการปฏิบัติงาน
@@ -192,11 +204,13 @@ function recordRemarks(form) {
       sheet.getRange(i + 1, 1, 1, 6).setValues([dataList]);
 
       return { result: true, dataList };
-    };
-  };
+    }
+  }
 
   sheet.appendRow(dataList);
-  sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+  sheet
+    .getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns())
+    .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
   return { result: false, dataList };
 }
 
@@ -206,62 +220,96 @@ function setupWeight(form) {
 
   let ss10s = SpreadsheetApp.openByUrl(url.url10s);
   let sheet10s = ss10s.getSheetByName(globalVariables().shSetWeight);
-  sheet10s.getRange(globalVariables().setupRange10s).setValues([
-    [form.TabletID_form],
-    [form.Balance10s_form],
-    [form.ProductName_form],
-    [form.Lot_form],
-    [form.Weight10s_form],
-    [form.Min10sControl_form],
-    [form.Max10sControl_form],
-    [form.MinDvt10s_form],
-    [form.MaxDvt10s_form],
-    [form.Percentage10s_form / 100],
-    [form.MinThickness10s_form],
-    [form.MaxThickness10s_form],
-    [form.usernameLC],
-    ["xxxxx"],
-    ["xxxxx"]
-  ]);
+  sheet10s
+    .getRange(globalVariables().setupRange10s)
+    .setValues([
+      [form.TabletID_form],
+      [form.Balance10s_form],
+      [form.ProductName_form],
+      [form.Lot_form],
+      [form.Weight10s_form],
+      [form.Min10sControl_form],
+      [form.Max10sControl_form],
+      [form.MinDvt10s_form],
+      [form.MaxDvt10s_form],
+      [form.Percentage10s_form / 100],
+      [form.MinThickness10s_form],
+      [form.MaxThickness10s_form],
+      [form.usernameLC],
+      ["xxxxx"],
+      ["xxxxx"],
+    ]);
 
-  sheet10s.getRange(globalVariables().setupRange10s).setNumberFormats([
-    ['@'], ['@'], ['@'], ['@'],
-    ['0.000'], ['0.000'], ['0.000'], ['0.000'], ['0.000'],
-    ['0.00%'], ['0.00'], ['0.00'], ['@'], ['@'], ['@']
-  ]);
+  sheet10s
+    .getRange(globalVariables().setupRange10s)
+    .setNumberFormats([
+      ["@"],
+      ["@"],
+      ["@"],
+      ["@"],
+      ["0.000"],
+      ["0.000"],
+      ["0.000"],
+      ["0.000"],
+      ["0.000"],
+      ["0.00%"],
+      ["0.00"],
+      ["0.00"],
+      ["@"],
+      ["@"],
+      ["@"],
+    ]);
 
   let ssIPC = SpreadsheetApp.openByUrl(url.urlIPC);
   let sheetIPC = ssIPC.getSheetByName(globalVariables().shSetWeight);
   let currentRange = sheetIPC.getRange("A3");
   if (currentRange.getDisplayValue() == "xxxxx") {
     currentRange.setValue("A19:B68");
-  };
+  }
 
-  sheetIPC.getRange(globalVariables().setupRangeIPC).setValues([
-    [form.TabletID_form],
-    [form.BalanceIPC_form],
-    [form.ProductName_form],
-    [form.NumberPastleIPC_form],
-    [form.Lot_form],
-    [form.NumberTabletsIPC_form],
-    [form.WeightIPC_form],
-    [form.PercentageIPC_form / 100],
-    [form.MinAvgIPC_form],
-    [form.MaxAvgIPC_form],
-    [form.MinControlIPC_form],
-    [form.MaxControlIPC_form],
-    [form.MinDvtIPC_form],
-    [form.MaxDvtIPC_form],
-    [form.usernameLC],
-    ["xxxxx"],
-    ["xxxxx"]
-  ]);
+  sheetIPC
+    .getRange(globalVariables().setupRangeIPC)
+    .setValues([
+      [form.TabletID_form],
+      [form.BalanceIPC_form],
+      [form.ProductName_form],
+      [form.NumberPastleIPC_form],
+      [form.Lot_form],
+      [form.NumberTabletsIPC_form],
+      [form.WeightIPC_form],
+      [form.PercentageIPC_form / 100],
+      [form.MinAvgIPC_form],
+      [form.MaxAvgIPC_form],
+      [form.MinControlIPC_form],
+      [form.MaxControlIPC_form],
+      [form.MinDvtIPC_form],
+      [form.MaxDvtIPC_form],
+      [form.usernameLC],
+      ["xxxxx"],
+      ["xxxxx"],
+    ]);
 
-  sheetIPC.getRange(globalVariables().setupRangeIPC).setNumberFormats([
-    ['@'], ['@'], ['@'], ['@'], ['@'], ['@'],
-    ['0.000'], ['0.00%'],
-    ['0.000'], ['0.000'], ['0.000'], ['0.000'], ['0.000'], ['0.000'], ['@'], ['@'], ['@']
-  ]);
+  sheetIPC
+    .getRange(globalVariables().setupRangeIPC)
+    .setNumberFormats([
+      ["@"],
+      ["@"],
+      ["@"],
+      ["@"],
+      ["@"],
+      ["@"],
+      ["0.000"],
+      ["0.00%"],
+      ["0.000"],
+      ["0.000"],
+      ["0.000"],
+      ["0.000"],
+      ["0.000"],
+      ["0.000"],
+      ["@"],
+      ["@"],
+      ["@"],
+    ]);
 
   // บันทึกการปฏิบัติงาน
   let detail = `\ชื่อยา: ${form.ProductName_form}\
@@ -278,7 +326,6 @@ function setupWeight(form) {
     \n ${globalVariables().shortenedLinks}`;
 
   sendLineNotify(approval_msg, globalVariables().approval_token);
-
 }
 
 // แก้ไขฐานข้อมูลน้ำหนักยา
@@ -304,7 +351,7 @@ function addOrEditWeightDatabase(form) {
     form.MinDvtIPC_form,
     form.MaxDvtIPC_form,
     form.MinControlIPC_form,
-    form.MaxControlIPC_form
+    form.MaxControlIPC_form,
   ];
 
   // บันทึกการปฏิบัติงาน
@@ -312,11 +359,13 @@ function addOrEditWeightDatabase(form) {
   audit_trail("เพิ่ม/แก้ไข ฐานข้อมูลน้ำหนักยา", detail, form.usernameLC);
 
   for (let i = 2; i < producNameList.length; i++) {
-    if (form.ProductName_form.toUpperCase() == producNameList[i][0].toUpperCase()) {
+    if (
+      form.ProductName_form.toUpperCase() == producNameList[i][0].toUpperCase()
+    ) {
       sheet.getRange(i + 1, 1, 1, sheet.getLastColumn()).setValues([dataLists]);
       return dataLists;
-    };
-  };
+    }
+  }
 
   sheet.appendRow(dataLists);
   return dataLists;
@@ -334,7 +383,7 @@ function addOrEditUser(form) {
     form.userNameTH_input,
     form.userNameEN,
     form.userPassword,
-    form.userRoot
+    form.userRoot,
   ];
 
   // บันทึกการปฏิบัติงาน
@@ -349,8 +398,8 @@ function addOrEditUser(form) {
     if (form.rfid_input == users[i][0]) {
       sheetUsers.getRange(i + 1, 1, 1, 6).setValues([dataLists]);
       return dataLists;
-    };
-  };
+    }
+  }
 
   sheetUsers.appendRow(dataLists);
   return dataLists;
@@ -372,6 +421,6 @@ function deleteUser(form) {
     if (form.rfid_input == users[i][0]) {
       sheetUsers.deleteRow(i + 1);
       audit_trail("ลบข้อมูลผู้ใช้งาน", detail, form.usernameLC); // บันทึกการปฏิบัติงาน
-    };
-  };
+    }
+  }
 }

@@ -16,37 +16,8 @@ function sha256(password) {
   return hashedPassword;
 }
 
-// ดึงข้อมูลผู้ใช้จาก Properties Service
-function getCookie() {
-  const userProperties = PropertiesService.getUserProperties();
-  const headerDataString = userProperties.getProperty('header');
-  const header = JSON.parse(headerDataString);
-
-  const headerBase64 = header["Authorization"];
-  const headerBase64deCode = Utilities.newBlob(Utilities.base64Decode(headerBase64)).getDataAsString();
-  const [jsonWebToken, privateKey] = headerBase64deCode.split(":");
-  console.log(jsonWebToken, privateKey)
-  return { jsonWebToken, privateKey };
-}
-
-// ส่งข้อมูลผู้ใช้ผ่าน Properties Service
-function setCookie(jsonWebToken, privateKey) {
-  const userProperties = PropertiesService.getUserProperties();
-  const header = {
-    "Authorization": Utilities.base64Encode(`${jsonWebToken}:${privateKey}`)
-  }
-
-  userProperties.setProperty('header', JSON.stringify(header));
-}
-
-// เคลียร์ข้อมูลผู้ใช้ผ่าน Properties Service
-function clearCookie() {
-  const userProperties = PropertiesService.getUserProperties();
-  userProperties.deleteAllProperties();
-}
-
 // สร้าง Token parameter(privateKey, หมดอายุภายในชั่วโมง, ข้อมูลผู้ใช้งาน)
-const createJWT = ({ privateKey, expiresInHours, data = {} }) => {
+const createJWT = ({ privateKey, expiresInHours, userData = {} }) => {
   // Header
   const header = {
     alg: 'HS256',
@@ -63,7 +34,7 @@ const createJWT = ({ privateKey, expiresInHours, data = {} }) => {
   };
 
   // Add user data to payload
-  Object.assign(payload, data);
+  Object.assign(payload, userData);
 
   // Function to encode text to base64
   const base64Encode = (text) => {
@@ -84,36 +55,36 @@ const createJWT = ({ privateKey, expiresInHours, data = {} }) => {
   return `${toSign}.${signature}`;
 }
 
-// สร้าง Token parameter(privateKey, ชื่อภาษาไทย)
-const generateAccessToken = ({ privateKey, data = {} }) => {
+// สร้าง Token parameter(privateKey, ข้อมูลผู้ใช้งาน)
+const generateAccessToken = ({ privateKey, userData = {} }) => {
   const accessToken = createJWT({
     privateKey,
     expiresInHours: 6, // expires in 6 hours
-    data
+    userData
   });
 
-  return accessToken;
+  return Utilities.base64Encode(`${accessToken}:${privateKey}`);
 }
 
 // ตรวจสอบความถูกต้องของ Token
-const validateToken = () => {
+const validateToken = (jsonWebToken) => {
   try {
-    const {jsonWebToken, privateKey} = getCookie();
+    const headerBase64deCode = Utilities.newBlob(Utilities.base64Decode(jsonWebToken)).getDataAsString();
+    const [jwt, privateKey] = headerBase64deCode.split(":");
 
-    if (jsonWebToken && privateKey) {
-      const [header, payload, signature] = jsonWebToken.split('.');
+    if (jwt && privateKey) {
+      const [header, payload, signature] = jwt.split('.');
       const signatureBytes = Utilities.computeHmacSha256Signature(`${header}.${payload}`, privateKey);
       const validSignature = Utilities.base64EncodeWebSafe(signatureBytes);
       if (signature === validSignature.replace(/=+$/, '')) {
         const blob = Utilities.newBlob(Utilities.base64Decode(payload)).getDataAsString();
-        const { exp, ...data } = JSON.parse(blob);
+        const { exp, ...userData } = JSON.parse(blob);
         if (new Date(exp * 1000) > new Date()) {
-          const newJsonWebToken = generateAccessToken({ privateKey, data });
-          setCookie(newJsonWebToken, privateKey);
-          return { 
-            message: 'success',
-            jsonWebToken: newJsonWebToken,
-            data: data 
+          const newJsonWebToken = generateAccessToken({ privateKey, userData });
+          return {
+            "message": 'success',
+            "jsonWebToken": newJsonWebToken,
+            "userData": userData
           };
         }
         else {
@@ -135,19 +106,18 @@ const validateToken = () => {
 // ทดสอบ JWT
 function testGenerateAccessToken() {
   const privateKey = '819e3d6c1381eac87c17617e5165f38c';
-  const data = {
+  const userData = {
     nameEN: "Nattapon",
     nameTH: "ณัฐพล",
     role: "Admin",
   }
 
-  const token = generateAccessToken({ privateKey, data });
-
-  setCookie(token, privateKey);
+  const token = generateAccessToken({ privateKey, userData });
+  console.log(token)
 }
 
 function testParseJwt() {
-  const result = validateToken();
+  const result = validateToken("ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFM01UUXhNRE16TWpNc0ltbGhkQ0k2TVRjeE5EQTRNVGN5TXl3aWJtRnRaVlJJSWpvaTRMaVQ0TGl4NExpUTRMaWU0TGlsSWl3aWJtRnRaVVZPSWpvaVRtRjBkR0Z3YjI0aUxDSnliMnhsSWpvaVFXUnRhVzRpZlEuYUVTR1pyeVVVUS10dERKQzhSeWI5cV9ESV9VMERWSDl3QjFRR0tsR21wazoyNzQ3MDgyNzkxNDBiYTBkYjU4MTI1OTNkNDM1MjBiMGIwZDEwODEwYjE2NTBhMzBhNzA5ODA1MTY1MjBjMjJiM2UwODg0MTA4NzNm");
   console.log(result)
 }
 
