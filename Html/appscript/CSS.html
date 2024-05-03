@@ -41,8 +41,9 @@
     --table-tbody-tr-hover-color: rgba(244, 255, 128, 0.741);
     --table-tbody-tr-td-font-size: 16px;
     --table-tbody-tr-td-font-color: #666666;
-    --weight-outOfRange-min-color: #ff5d9e;
-    --weight-outOfRange-max-color: #ff3320;
+    --weight-outOfRange-inHouse-color: #ff5d9e;
+    --weight-outOfRange-regulation-color: #ff3320;
+    --thickness-outOfRange-color: #ff3320;
 
     --data-control-nomal-color: #34a853;
     --data-control-abnomal-color: #ff3320;
@@ -470,6 +471,7 @@
           color: white !important;
           padding: 8px 5px !important;
           font-weight: bolder;
+          cursor: default !important;
 
           &.table-title {
             font-size: var(--table-thead-title-font-size) !important;
@@ -511,9 +513,8 @@
           /* CSS WEIGHING CONDITION */
           & > div {
             &.weight-outOfRange-inHouse-min,
-            &.weight-outOfRange-regulation-min,
-            &.weight-outOfRange-average-min {
-              background-color: var(--weight-outOfRange-min-color);
+            &.weight-outOfRange-inHouse-max {
+              background-color: var(--weight-outOfRange-inHouse-color);
               color: #ffffff;
 
               /* &::before {
@@ -524,10 +525,11 @@
                 } */
             }
 
-            &.weight-outOfRange-inHouse-max,
+            &.weight-outOfRange-regulation-min,
             &.weight-outOfRange-regulation-max,
+            &.weight-outOfRange-average-min,
             &.weight-outOfRange-average-max {
-              background-color: var(--weight-outOfRange-max-color);
+              background-color: var(--weight-outOfRange-regulation-color);
               color: #ffffff;
 
               /* &::before {
@@ -545,27 +547,27 @@
     & > tfoot > tr > td > div {
       /* CSS WEIGHING CONDITION */
       &.weight-outOfRange-inHouse-min,
-      &.weight-outOfRange-regulation-min,
-      &.weight-outOfRange-average-min {
+      &.weight-outOfRange-inHouse-max {
         background-color: var(--weight-outOfRange-min-color);
         color: #ffffff;
 
         /* &::before {
-          content: '\f063';
-          font-family: FontAwesome;
-          padding-right: 3px;
-          color: #ffffff;
+            content: '\f063';
+            font-family: FontAwesome;
+            padding-right: 3px;
+            color: #ffffff;
         } */
       }
 
-      &.weight-outOfRange-inHouse-max,
+      &.weight-outOfRange-regulation-min,
       &.weight-outOfRange-regulation-max,
+      &.weight-outOfRange-average-min,
       &.weight-outOfRange-average-max {
         background-color: var(--weight-outOfRange-max-color);
         color: #ffffff;
 
         /* &::before {
-          content: '\f062';
+                    content: '\f062';
           font-family: FontAwesome;
           padding-right: 3px;
           color: #ffffff;
@@ -667,7 +669,7 @@
     }
 
     &.thickness-outOfRange-min {
-      background-color: #ff3320;
+      background-color: var(--thickness-outOfRange-color);
       color: #ffffff;
 
       /* &::before {
@@ -679,7 +681,7 @@
     }
 
     &.thickness-outOfRange-max {
-      background-color: #ff3320;
+      background-color: var(--thickness-outOfRange-color);
       color: #ffffff;
 
       /* &::before {
@@ -1770,7 +1772,7 @@
     background-color: transparent;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    
+
     & > .loader {
       width: 400px;
       height: 100%;

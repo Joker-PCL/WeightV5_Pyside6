@@ -171,9 +171,10 @@
 
   // สร้างแม่แบบฟอร์มบันทึก remarks
   class FormRemarksModal {
-    constructor(id) {
+    constructor(id, formType) {
       this.body = document.body;
       this.id = id;
+      this.formType = formType;
       this.modal = document.createElement("div");
       this.modal.id = id;
       this.modal.classList.add("remarks-modal", "modal", "fade");
@@ -229,6 +230,12 @@
       }
 
       this.form.innerHTML = "";
+      this._formType = document.createElement("input");
+      this._formType.type = "hidden";
+      this._formType.name = "type";
+      this._formType.value = this.formType;
+      this.form.appendChild(this._formType);
+
       this.rowIndex = document.createElement("input");
       this.rowIndex.type = "hidden";
       this.rowIndex.name = "rowIndex";
@@ -396,8 +403,8 @@
 
   // สร้างหน้าข้อมูลการชั่งน้ำหนัก 10 เม็ด parameter(ไอดี container, ข้อมูลการชั่งน้ำหนักและข้อมูลอื่นๆ)
   class Weighing10s {
-    constructor(role, containerId, options) {
-      this.role = role;
+    constructor(containerId, options) {
+      this.role = JSON.parse(localStorage.getItem(storageKey.userData)).role;
       this.containerId = containerId;
       this.main_container = document.getElementById(this.containerId);
       this.container = document.createElement("main");
@@ -429,10 +436,9 @@
         this.role === role_definition.Admin ||
         this.role === role_definition.Superuser
       ) {
-        $(document).ready(
-          function () {
-            this.formRemarks = new FormRemarksModal(`${this.containerId}_form`);
-          }.bind(this)
+        this.formRemarks = new FormRemarksModal(
+          `${this.containerId}_form`,
+          "10 เม็ด"
         );
       }
     }
@@ -493,10 +499,10 @@
             SwalMiniAlert.fire({ title: "ไม่สามารถอัพเดทข้อมูลได้" });
           }
         })
-        .getWeighingData_10s(
-          localStorage.getItem(storageKey.jsonWebToken),
-          this.url
-        );
+        .getWeighingData10s({
+          url: this.url,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // จบการผลิต
@@ -514,88 +520,128 @@
     }
 
     // ลงชื่อตรวจสอบการตั้งค่า
-    signInToCheckTheSettings() {
+    _signInToCheckTheSettings() {
       loadingEdit("show");
-      setTimeout(
-        function () {
-          loadingEdit("hide");
-          SwalAlert.fire({
-            text: "ลงชื่อตรวจสอบการตั้งค่าเรียบร้อยแล้ว",
-          }).then(this.loadWeighingData.bind(this));
-        }.bind(this),
-        2500
-      );
+
+      const url = this.searchUrl(this.currentListname);
+      google.script.run
+        .withSuccessHandler(({ result, dataset }) => {
+          if (result.message === "success") {
+            loadingEdit("hide");
+            SwalAlert.fire({
+              text: "ลงชื่อตรวจสอบการตั้งค่าเรียบร้อยแล้ว",
+            }).then(this.loadWeighingData.bind(this));
+          } else {
+            SwalAlert.fire({
+              title: "ไม่สามารถอัพเดทข้อมูลได้",
+              text: "กรุณาลองไม่อีกครั้ง",
+            });
+          }
+        })
+        .signInToCheckTheSettings10s({
+          url: url,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // ลงชื่อตรวจสอบข้อมูลการชั่งน้ำหนัก
-    signInToCheckTheWeighingData() {
-      loadingEdit("show");
-      setTimeout(
-        function () {
-          const firstRow = this.weighingTable.row(0);
-          const rowData = firstRow.data();
-          loadingEdit("hide");
-          console.log(rowData[8]);
-          if (rowData[8] === "-") {
-            rowData[8] = "ยิ่งลักษณ์"; // ลงชื่อผู้ตรวจสอบ
-            SwalMiniAlert.fire({ title: "ลงชื่อผู้ตรวจสอบเรียบร้อยแล้ว" });
-            const node = this.weighingTable
-              .row(0)
-              .data(rowData)
-              .draw(false)
-              .node();
+    _signInToCheckTheWeighingData() {
+      const url = this.searchUrl(this.currentListname);
+      const firstRow = this.weighingTable.row(0);
+      const rowData = firstRow.data();
 
-            $(node).hide();
-            $(node).fadeIn(1500);
-          } else {
-            SwalAlert.fire({
-              icon: "error",
-              title: "แจ้งเตือนการดำเนินการ",
-              text: "มีการลงชื่อตรวจสอบข้อมูลการชั่งน้ำหนักแล้ว",
-            });
-          }
-        }.bind(this),
-        2500
-      );
+      if (rowData[8] === "-") {
+        loadingEdit("show");
+        google.script.run
+          .withSuccessHandler(({ result, inspectorName }) => {
+            loadingEdit("hide");
+            if (result.message === "success") {
+              rowData[8] = inspectorName; // ลงชื่อผู้ตรวจสอบ
+              SwalMiniAlert.fire({ title: "ลงชื่อผู้ตรวจสอบเรียบร้อยแล้ว" });
+              const node = this.weighingTable
+                .row(0)
+                .data(rowData)
+                .draw()
+                .node();
+
+              $(node).hide();
+              $(node).fadeIn(1500);
+            } else {
+              SwalMiniAlert.fire({
+                title: "เกิดข้อผิดพลาด",
+                text: "กรุณาลองไหม่อีกครั้ง",
+              });
+            }
+          })
+          .signInToCheckTheWeighingData({
+            url: url,
+            jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+          });
+      } else {
+        SwalAlert.fire({
+          icon: "error",
+          title: "แจ้งเตือนการดำเนินการ",
+          text: "มีการลงชื่อตรวจสอบข้อมูลการชั่งน้ำหนักแล้ว",
+        });
+      }
     }
 
     // บันทึกข้อมูล Remarks
-    onSubmitFormRemarks(form) {
+    onSubmitFormRemarks() {
       loadingEdit("show");
+      const formData = {};
+      $(this.formRemarks.form)
+        .find("input, textarea")
+        .each(function () {
+          formData[this.name] = this.value;
+        });
 
-      setTimeout(
-        function () {
+      const url = this.searchUrl(this.currentListname);
+      google.script.run
+        .withSuccessHandler(({ result, details }) => {
           loadingEdit("hide");
-          SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-          this.formRemarks.modal.hide();
+          if (result.message === "success") {
+            SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
+            this.formRemarks.modal.hide();
 
-          const formData = form.elements;
-          const dataRow = [
-            formData.timestamp.value,
-            formData.issues.value,
-            formData.cause.value,
-            formData.resolves.value,
-            formData.notes.value,
-            "จักรทิพย์",
-            role_definition.Admin,
-          ];
-          var node;
-          if (formData.rowIndex.value) {
-            node = this.remarksTable
-              .row(formData.rowIndex.value)
-              .data(dataRow)
-              .draw(false)
-              .node();
+            const table = this.remarksTable;
+            var node;
+            if (formData.rowIndex) {
+              node = table
+                .row(formData.rowIndex)
+                .data(details)
+                .draw(false)
+                .node();
+            } else {
+              node = table.row.add(details).draw(false).node();
+              let rowCount = table.data().length - 1;
+              let insertedRow = table.row(rowCount).data();
+              let tempRow;
+
+              for (let i = rowCount; i > 0; i--) {
+                tempRow = table.row(i - 1).data();
+                table.row(i).data(tempRow);
+                table.row(i - 1).data(insertedRow);
+              }
+
+              table.draw();
+            }
+
+            $(node).hide();
+            $(node).fadeIn(1500);
+            this.formRemarks.form.reset();
           } else {
-            node = this.remarksTable.row.add(dataRow).draw().node();
+            SwalAlert.fire({
+              title: "ไม่สามารถอัพเดทข้อมูลได้",
+              text: "กรุณาลองไม่อีกครั้ง",
+            });
           }
-
-          $(node).hide();
-          $(node).fadeIn(1500);
-          form.reset();
-        }.bind(this),
-        2500
-      );
+        })
+        .recordRemarksData({
+          url: url,
+          form: formData,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // แสดงหน้าชั่งน้ำหนัก
@@ -640,20 +686,40 @@
 
       // เพิ่ม event ปุ่มจบการผลิต
       $(this.buttonFinished).click(() => {
-        SwalPopup.fire({
-          title: "ยืนยันการจัดเก็บเอกสาร",
-          text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
-          icon: "warning",
-          confirmButtonText: "ยืนยัน, จบการผลิต",
-        }).then((res) => {
-          if (res.isConfirmed) {
-            this.endOfProduction();
+        // ตรวจสอบข้อมูล Remarks
+        let rowsData = this.remarksTable.rows().data();
+        let checkRemarksState = true;
+        rowsData.each(function (rowData, index) {
+          const cause = rowData[2];
+          const resolve = rowData[3];
+          if (cause == "" || resolve == "") {
+            SwalPopup.fire({
+              title: "กรุณากรอกข้อมูลให้ครบถ้วน",
+              text: "ลงข้อมูล Remarks ให้ครบถ้วนก่อนจบการผลิต",
+              showConfirmButton: false,
+              cancelButtonText: "ปิด",
+            });
+            checkRemarksState = false;
+            return false;
           }
         });
+
+        if (checkRemarksState) {
+          SwalPopup.fire({
+            title: "ยืนยันการจัดเก็บเอกสาร",
+            text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
+            icon: "warning",
+            confirmButtonText: "ยืนยัน, จบการผลิต",
+          }).then((res) => {
+            if (res.isConfirmed) {
+              this.endOfProduction();
+            }
+          });
+        }
       });
 
       // เพิ่ม event ปุ่มลงชื่อตรวจสอบการตั้งค่า
-      $(this.buttonApproved).click(this.signInToCheckTheSettings.bind(this));
+      $(this.buttonApproved).click(this._signInToCheckTheSettings.bind(this));
 
       // เพิ่ม event ปุ่มลงชื่อผู้ตรวจสอบ
       $(this.addCheckerButton).click(() => {
@@ -664,7 +730,7 @@
           confirmButtonText: "ยืนยัน",
         }).then((res) => {
           if (res.isConfirmed) {
-            this.signInToCheckTheWeighingData();
+            this._signInToCheckTheWeighingData();
           }
         });
       });
@@ -694,13 +760,10 @@
             }.bind(this)
           );
 
-          const form = this.formRemarks.form;
-          $(form).submit(
-            function (e) {
+          $(this.formRemarks.form).submit((e)=> {
               e.preventDefault();
-              this.onSubmitFormRemarks(form);
-            }.bind(this)
-          );
+              this.onSubmitFormRemarks();
+          });
         });
       }
     }
@@ -1364,8 +1427,8 @@
 <script>
   // สร้างหน้าข้อมูลการชั่งน้ำหนัก ipc
   class WeighingIpc {
-    constructor(role, containerId, options) {
-      this.role = role;
+    constructor(containerId, options) {
+      this.role = JSON.parse(localStorage.getItem(storageKey.userData)).role;
       this.main_container = document.getElementById(containerId);
       this.container = document.createElement("main");
       this.setupTable = options.setupTable;
@@ -1388,10 +1451,9 @@
         this.role === role_definition.Admin ||
         this.role === role_definition.Superuser
       ) {
-        $(document).ready(
-          function () {
-            this.formRemarks = new FormRemarksModal(`${this.containerId}_form`);
-          }.bind(this)
+        this.formRemarks = new FormRemarksModal(
+          `${this.containerId}_form`,
+          "IPC"
         );
       }
     }
@@ -1474,61 +1536,90 @@
     }
 
     // ลงชื่อตรวจสอบการตั้งค่า
-    signInToCheckTheSettings() {
+    _signInToCheckTheSettings() {
       loadingEdit("show");
-      setTimeout(
-        function () {
-          loadingEdit("hide");
-          SwalAlert.fire({
-            text: "ลงชื่อตรวจสอบการตั้งค่าเรียบร้อยแล้ว",
-          }).then(this.loadWeighingData.bind(this));
-        }.bind(this),
-        2500
-      );
+
+      const url = this.searchUrl(this.currentListname);
+      google.script.run
+        .withSuccessHandler(({ result, dataset }) => {
+          if (result.message === "success") {
+            loadingEdit("hide");
+            SwalAlert.fire({
+              text: "ลงชื่อตรวจสอบการตั้งค่าเรียบร้อยแล้ว",
+            }).then(this.loadWeighingData.bind(this));
+          } else {
+            SwalAlert.fire({
+              title: "ไม่สามารถอัพเดทข้อมูลได้",
+              text: "กรุณาลองไม่อีกครั้ง",
+            });
+          }
+        })
+        .signInToCheckTheSettingsIPC({
+          url: url,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // บันทึกข้อมูล Remarks
-    onSubmitFormRemarks(form) {
+    onSubmitFormRemarks() {
       loadingEdit("show");
+      const formData = {};
+      $(this.formRemarks.form)
+        .find("input, textarea")
+        .each(function () {
+          formData[this.name] = this.value;
+        });
 
-      setTimeout(
-        function () {
+      const url = this.searchUrl(this.currentListname);
+      google.script.run
+        .withSuccessHandler(({ result, details }) => {
           loadingEdit("hide");
-          SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-          this.formRemarks.modal.hide();
+          if (result.message === "success") {
+            SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
+            this.formRemarks.modal.hide();
 
-          const formData = form.elements;
-          const dataRow = [
-            formData.timestamp.value,
-            formData.issues.value,
-            formData.cause.value,
-            formData.resolves.value,
-            formData.notes.value,
-            "จักรทิพย์",
-            "Admin",
-          ];
-          var node;
-          if (formData.rowIndex.value) {
-            node = this.remarksTable
-              .row(formData.rowIndex.value)
-              .data(dataRow)
-              .draw(false)
-              .node();
+            const table = this.remarksTable;
+            var node;
+            if (formData.rowIndex) {
+              node = table
+                .row(formData.rowIndex)
+                .data(details)
+                .draw(false)
+                .node();
+            } else {
+              node = table.row.add(details).draw(false).node();
+              let rowCount = table.data().length - 1;
+              let insertedRow = table.row(rowCount).data();
+              let tempRow;
+
+              for (let i = rowCount; i > 0; i--) {
+                tempRow = table.row(i - 1).data();
+                table.row(i).data(tempRow);
+                table.row(i - 1).data(insertedRow);
+              }
+
+              table.draw();
+            }
+
+            $(node).hide();
+            $(node).fadeIn(1500);
+            this.formRemarks.form.reset();
           } else {
-            node = this.remarksTable.row.add(dataRow).draw().node();
+            SwalAlert.fire({
+              title: "ไม่สามารถอัพเดทข้อมูลได้",
+              text: "กรุณาลองไม่อีกครั้ง",
+            });
           }
-
-          $(node).hide();
-          $(node).fadeIn(1500);
-          form.reset();
-        }.bind(this),
-        2500
-      );
+        })
+        .recordRemarksData({
+          url: url,
+          form: formData,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // แสดงผลข้อมูลการชั่งน้ำหนัก
     render(dataset) {
-      console.log(dataset);
       this.settingDetail = dataset.settingDetail;
       this.productName = this.settingDetail.productName;
       this.lot = this.settingDetail.lot;
@@ -1567,20 +1658,40 @@
 
       // เพิ่ม event ปุ่มจบการผลิต
       $(this.buttonFinished).click(() => {
-        SwalPopup.fire({
-          title: "ยืนยันการจัดเก็บเอกสาร",
-          text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
-          icon: "warning",
-          confirmButtonText: "ยืนยัน, จบการผลิต",
-        }).then((res) => {
-          if (res.isConfirmed) {
-            this.endOfProduction();
+        // ตรวจสอบข้อมูล Remarks
+        let rowsData = this.remarksTable.rows().data();
+        let checkRemarksState = true;
+        rowsData.each(function (rowData, index) {
+          const cause = rowData[2];
+          const resolve = rowData[3];
+          if (cause == "" || resolve == "") {
+            SwalPopup.fire({
+              title: "กรุณากรอกข้อมูลให้ครบถ้วน",
+              text: "ลงข้อมูล Remarks ให้ครบถ้วนก่อนจบการผลิต",
+              showConfirmButton: false,
+              cancelButtonText: "ปิด",
+            });
+            checkRemarksState = false;
+            return false;
           }
         });
+
+        if (checkRemarksState) {
+          SwalPopup.fire({
+            title: "ยืนยันการจัดเก็บเอกสาร",
+            text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
+            icon: "warning",
+            confirmButtonText: "ยืนยัน, จบการผลิต",
+          }).then((res) => {
+            if (res.isConfirmed) {
+              this.endOfProduction();
+            }
+          });
+        }
       });
 
       // เพิ่ม event ปุ่มลงชื่อตรวจสอบการตั้งค่า
-      $(this.buttonApproved).click(this.signInToCheckTheSettings.bind(this));
+      $(this.buttonApproved).click(this._signInToCheckTheSettings.bind(this));
 
       // แสดงข้อมูลชั่งน้ำหนัก
       $(this.container).fadeIn(1500);
@@ -1606,13 +1717,10 @@
             }.bind(this)
           );
 
-          const form = this.formRemarks.form;
-          $(form).submit(
-            function (e) {
+          $(this.formRemarks.form).submit((e)=> {
               e.preventDefault();
-              this.onSubmitFormRemarks(form);
-            }.bind(this)
-          );
+              this.onSubmitFormRemarks();
+          });
         });
       }
     }
@@ -1671,15 +1779,17 @@
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1 &&
         this.productName !== "xxxxx"
       ) {
-        this.buttonFinished = document.createElement("button");
-        this.buttonFinished.id = "button_finished_ipc";
-        this.buttonFinished.classList.add(
-          "btn",
-          "btn-danger",
-          "button-finished"
-        );
-        this.buttonFinished.textContent = "จบการผลิต";
-        buttonEl.appendChild(this.buttonFinished);
+        if (this.prepared != "xxxxx" && this.approved != "xxxxx") {
+          this.buttonFinished = document.createElement("button");
+          this.buttonFinished.id = "button_finished_ipc";
+          this.buttonFinished.classList.add(
+            "btn",
+            "btn-danger",
+            "button-finished"
+          );
+          this.buttonFinished.textContent = "จบการผลิต";
+          buttonEl.appendChild(this.buttonFinished);
+        }
       }
       settings_container.appendChild(buttonEl);
 
@@ -2157,8 +2267,8 @@
 <!-- ตั้งค่าน้ำหนักยาของเครื่องตอก -->
 <script>
   class CreateForm {
-    constructor(role, containerId) {
-      this.role = role;
+    constructor(containerId) {
+      this.role = JSON.parse(localStorage.getItem(storageKey.userData)).role;
       this.containerId = containerId;
       this.container = document.getElementById(this.containerId);
     }
@@ -2183,7 +2293,11 @@
               `.input-group>input[name="${key}"]`
             );
 
-            if(key === "percentWeightVariation10s" || key === "thickness10sMin" || key === "thickness10sMax") {
+            if (
+              key === "percentWeightVariation10s" ||
+              key === "thickness10sMin" ||
+              key === "thickness10sMax"
+            ) {
               inputEl.val(parseFloat(value.replace("%", "")).toFixed(2));
             } else {
               inputEl.val(parseFloat(value).toFixed(3));
@@ -2197,7 +2311,7 @@
               `.input-group>input[name="${key}"]`
             );
 
-            if(key === "percentWeightVariationIpc") {
+            if (key === "percentWeightVariationIpc") {
               inputEl.val(parseFloat(value.replace("%", "")).toFixed(2));
             } else {
               inputEl.val(parseFloat(value).toFixed(3));
@@ -2213,9 +2327,9 @@
     }
 
     // สร้างรายการจากชื่อยา
-    createDropdownProductList(dataSettings) {
-      if (dataSettings) {
-        this.productLists = dataSettings;
+    createDropdownProductList(productLists) {
+      if (productLists) {
+        this.productLists = productLists;
       }
 
       let datasource = [];
@@ -2248,26 +2362,62 @@
     }
 
     // บันทึกการตั้งค่าน้ำหนักยา
-    setupFormOnSubmit() {
+    _setupFormOnSubmit() {
       loadingEdit("show");
-      setTimeout(function () {
-        SwalAlert.fire({
-          text: "ตั้งค่าน้ำหนักยาเรียบร้อยแล้ว",
+
+      const formData = {};
+      $(this.setupForm)
+        .find("input, select")
+        .each(function () {
+          formData[this.name] = this.value;
         });
-        loadingEdit("hide");
-      }, 2500);
+
+      google.script.run
+        .withSuccessHandler(({ result }) => {
+          loadingEdit("hide");
+          if (result.message === "success") {
+            this.setupForm.reset();
+            SwalAlert.fire({ text: "ตั้งค่าน้ำหนักยาเรียบร้อยแล้ว" });
+          } else {
+            localStorage.clear();
+            logout();
+          }
+        })
+        .setupWeight({
+          form: formData,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // บันทึกการเพิ่ม, แก้ไขฐานข้อมูลตั้งค่าน้ำหนักยา
-    editFormOnSubmit(form) {
+    _editFormOnSubmit() {
       loadingEdit("show");
-      setTimeout(function () {
-        SwalAlert.fire({
-          text: "เพิ่ม, แก้ไขฐานข้อมูลน้ำหนักยาเรียบร้อยแล้ว",
+
+      const formData = {};
+      $(this.editForm)
+        .find("input, select")
+        .each(function () {
+          formData[this.name] = this.value;
         });
-        loadingEdit("hide");
-        form.reset();
-      }, 2500);
+
+      google.script.run
+        .withSuccessHandler(({ result, productLists }) => {
+          loadingEdit("hide");
+          if (result.message === "success") {
+            this.editForm.reset();
+            this.createDropdownProductList(productLists);
+            SwalAlert.fire({
+              text: "เพิ่ม, แก้ไขฐานข้อมูลน้ำหนักยาเรียบร้อยแล้ว",
+            });
+          } else {
+            localStorage.clear();
+            logout();
+          }
+        })
+        .addOrEditWeightDatabase({
+          form: formData,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // สร้าง tag input รับข้อมูล
@@ -2587,7 +2737,7 @@
       this.productLists = settingLists.productLists;
       this.tabletLists = settingLists.tabletLists;
       this.balanceLists = settingLists.balanceLists;
-      const form = document.createElement("form");
+      this.setupForm = document.createElement("form");
       const search_group = document.createElement("div");
       search_group.classList.add("form-search-group");
 
@@ -2624,13 +2774,13 @@
       });
 
       search_group.appendChild(tabletID);
-      form.appendChild(search_group);
+      this.setupForm.appendChild(search_group);
 
       const weight10sForm = this.createForm10s({ formType: "setup" });
       const weightIpcForm = this.createFormIpc({ formType: "setup" });
-      form.appendChild(weight10sForm);
-      form.appendChild(document.createElement("hr"));
-      form.appendChild(weightIpcForm);
+      this.setupForm.appendChild(weight10sForm);
+      this.setupForm.appendChild(document.createElement("hr"));
+      this.setupForm.appendChild(weightIpcForm);
 
       const containerSubmitForm = document.createElement("div");
       containerSubmitForm.className = "form-submit-group";
@@ -2645,12 +2795,12 @@
       resetForm.type = "reset";
       resetForm.textContent = "ยกเลิก";
       containerSubmitForm.appendChild(resetForm);
-      form.appendChild(containerSubmitForm);
-      this.container.appendChild(form);
+      this.setupForm.appendChild(containerSubmitForm);
+      this.container.appendChild(this.setupForm);
 
-      $(form).submit((event) => {
+      $(this.setupForm).submit((event) => {
         event.preventDefault();
-        this.setupFormOnSubmit(form);
+        this._setupFormOnSubmit();
       });
 
       this.searchProductsEl = $(productName)[0].firstChild;
@@ -2663,7 +2813,7 @@
       this.tabletLists = settingLists.tabletLists;
       this.balanceLists = settingLists.balanceLists;
 
-      const form = document.createElement("form");
+      this.editForm = document.createElement("form");
       const search_group = document.createElement("div");
       search_group.classList.add("form-search-group");
 
@@ -2674,13 +2824,13 @@
         type: "search",
       });
       search_group.appendChild(productName);
-      form.appendChild(search_group);
+      this.editForm.appendChild(search_group);
 
       const weight10sForm = this.createForm10s({ formType: "edit" });
       const weightIpcForm = this.createFormIpc({ formType: "edit" });
-      form.appendChild(weight10sForm);
-      form.appendChild(document.createElement("hr"));
-      form.appendChild(weightIpcForm);
+      this.editForm.appendChild(weight10sForm);
+      this.editForm.appendChild(document.createElement("hr"));
+      this.editForm.appendChild(weightIpcForm);
 
       const containerSubmitForm = document.createElement("div");
       containerSubmitForm.className = "form-submit-group";
@@ -2695,12 +2845,12 @@
       resetForm.type = "reset";
       resetForm.textContent = "ยกเลิก";
       containerSubmitForm.appendChild(resetForm);
-      form.appendChild(containerSubmitForm);
-      this.container.appendChild(form);
+      this.editForm.appendChild(containerSubmitForm);
+      this.container.appendChild(this.editForm);
 
-      $(form).submit((event) => {
+      $(this.editForm).submit((event) => {
         event.preventDefault();
-        this.editFormOnSubmit(form);
+        this._editFormOnSubmit();
       });
 
       this.searchProductsEl = $(productName)[0].firstChild;
@@ -2717,12 +2867,10 @@
     }
 
     // ค้นหาข้อมูลผู้ใช้จากฐานข้อมูลในระบบ
-    searchUserData(usernameTH) {
-      const results = Object.entries(this.userDataLists).find(
-        ([rfid, data]) => {
-          return usernameTH == data.usernameTH;
-        }
-      );
+    searchUserData(usernameTH, userDataLists) {
+      const results = Object.entries(userDataLists).find(([rfid, data]) => {
+        return usernameTH == data.usernameTH;
+      });
 
       if (results) {
         const [rfid, data] = results;
@@ -2740,23 +2888,39 @@
       }
     }
 
-    // สร้างรายการจากชื่อยา
-    createDropdownList(userDataLists) {
-      if (userDataLists) {
-        this.userDataLists = userDataLists;
-      }
-
+    // สร้างรายการจากข้อมูลในระบบ
+    createDropdownList() {
       const element = $(this.usernameList)[0].firstChild;
-      Object.entries(this.userDataLists).forEach(([rfid, data]) => {
-        const options = document.createElement("option");
-        options.value = data.usernameTH;
-        options.innerText = data.usernameTH;
-        element.appendChild(options);
-      });
+      element.disabled = true;
+      google.script.run
+        .withSuccessHandler(({ result, userDataLists }) => {
+          this.userDataLists = userDataLists;
+          if (result.message === "success") {
+            localStorage.setItem(storageKey.jsonWebToken, result.jsonWebToken);
 
-      $(element).change((event) => {
-        this.searchUserData(event.target.value);
-      });
+            element.disabled = false;
+            element.innerHTML = "";
+            const _options = document.createElement("option");
+            _options.value = "";
+            _options.innerText = "รายชื่อพนักงาน...";
+            element.appendChild(_options);
+
+            Object.entries(this.userDataLists).forEach(([rfid, data]) => {
+              const options = document.createElement("option");
+              options.value = data.usernameTH;
+              options.innerText = data.usernameTH;
+              element.appendChild(options);
+            });
+
+            $(element).change((event) => {
+              this.searchUserData(event.target.value, this.userDataLists);
+            });
+          } else {
+            console.log(result.message);
+            logout();
+          }
+        })
+        .getUserDataLists(localStorage.getItem(storageKey.jsonWebToken));
     }
 
     // สร้าง tag input รับข้อมูล
@@ -2836,10 +3000,69 @@
       return container;
     }
 
+    // เพิ่มหรือแก้ไขข้อมูลผู้ใช้งาน
+    _addOrEditUserData() {
+      const formData = {};
+      $(this.form)
+        .find("input, select")
+        .each(function () {
+          formData[this.name] = this.value;
+        });
+      loadingEdit("show");
+
+      google.script.run
+        .withSuccessHandler(({ result }) => {
+          loadingEdit("hide");
+          if (result.message === "success") {
+            this.form.reset();
+            this.createDropdownList();
+            SwalAlert.fire({
+              text: "เพิ่ม, แก้ไขข้อมูล ผู้ใช้งานเรียบร้อยแล้ว",
+            });
+          } else {
+            localStorage.clear();
+            logout();
+          }
+        })
+        .addOrEditUserData({
+          form: formData,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
+    }
+
+    // ยืนยันการลบข้อมูลผู้ใช้งานออกจากฐานข้อมูล
+    _deleteUser() {
+      loadingTrash("show");
+
+      const formData = {};
+      $(this.form)
+        .find("input, select")
+        .each(function () {
+          formData[this.name] = this.value;
+        });
+
+      google.script.run
+        .withSuccessHandler(({ result }) => {
+          loadingTrash("hide");
+          if (result.message === "success") {
+            this.form.reset();
+            this.createDropdownList();
+            SwalAlert.fire({ text: "ลบข้อมูล! ออกจากระบบเรียบร้อยแล้ว" });
+          } else {
+            localStorage.clear();
+            logout();
+          }
+        })
+        .deleteUser({
+          form: formData,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
+    }
+
     // สร้างฟอร์ม
     createFormUserData(userDataLists) {
       this.userDataLists = userDataLists;
-      const form = document.createElement("form");
+      this.form = document.createElement("form");
       const container_header = document.createElement("div");
       container_header.className = "form-header-group";
 
@@ -2855,13 +3078,13 @@
       delete_button.type = "button";
       delete_button.textContent = "ลบข้อมูล";
       container_header.appendChild(delete_button);
-      form.appendChild(container_header);
-      form.appendChild(document.createElement("hr"));
+      this.form.appendChild(container_header);
+      this.form.appendChild(document.createElement("hr"));
 
       const title = document.createElement("p");
       title.className = "form-title";
       title.textContent = "ข้อมูลพนักงาน";
-      form.appendChild(title);
+      this.form.appendChild(title);
 
       // รหัสบัตรพนักงาน 10 หลัก
       const rfid = this.createInputGroup({
@@ -2877,7 +3100,7 @@
           },
         },
       });
-      form.appendChild(rfid);
+      this.form.appendChild(rfid);
 
       // รหัสพนักงาน
       const employeeId = this.createInputGroup({
@@ -2888,7 +3111,7 @@
           options: { placeholder: "รหัสพนักงาน..." },
         },
       });
-      form.appendChild(employeeId);
+      this.form.appendChild(employeeId);
 
       // ชื่อภาษาไทย
       const usernameTH = this.createInputGroup({
@@ -2902,7 +3125,7 @@
           },
         },
       });
-      form.appendChild(usernameTH);
+      this.form.appendChild(usernameTH);
 
       // ชื่อภาษาอังกฤษ
       const usernameEN = this.createInputGroup({
@@ -2916,7 +3139,7 @@
           },
         },
       });
-      form.appendChild(usernameEN);
+      this.form.appendChild(usernameEN);
 
       // รหัสผ่าน
       this.password = this.createInputGroup({
@@ -2931,7 +3154,7 @@
           },
         },
       });
-      form.appendChild(this.password);
+      this.form.appendChild(this.password);
 
       // สิทธิการใช้งาน
       const role = this.createInputGroup({
@@ -2949,7 +3172,7 @@
           options: { placeholder: "สิทธิการใช้งาน..." },
         },
       });
-      form.appendChild(role);
+      this.form.appendChild(role);
 
       const containerSubmitForm = document.createElement("div");
       containerSubmitForm.className = "form-submit-group";
@@ -2964,51 +3187,34 @@
       resetForm.type = "reset";
       resetForm.textContent = "ยกเลิก";
       containerSubmitForm.appendChild(resetForm);
-      form.appendChild(containerSubmitForm);
+      this.form.appendChild(containerSubmitForm);
 
-      this.container.appendChild(form);
+      this.container.appendChild(this.form);
 
       // สร้าง dropdown รายชื่อพนักงาน
       this.createDropdownList();
 
       // EventListener
-      $(document).ready(function () {
-        // ลบข้อมูลผู้ใช้งาน
-        $(delete_button).click(() => {
+      // ลบข้อมูลผู้ใช้งาน
+      $(delete_button).click(() => {
+        const element = $(this.usernameList)[0].firstChild;
+        if (element.value) {
           SwalPopup.fire({
             title: "ลบข้อมูลผู้ใช้งาน!",
             text: "ต้องการลบข้อมูลผู้ใช้งาน",
-          }).then(deleteUser);
-        });
-
-        // เพิ่มหรือแก้ไขข้อมูลผู้ใช้งาน
-        $(form).submit((e) => {
-          e.preventDefault();
-          addOrEditUser();
-        });
+          }).then((res) => {
+            if (res.isConfirmed) {
+              this._deleteUser();
+            }
+          });
+        }
       });
 
-      // ยืนยันการลบข้อมูลผู้ใช้งานออกจากฐานข้อมูล
-      function deleteUser(res) {
-        if (res.isConfirmed) {
-          loadingTrash("show");
-          setTimeout(function () {
-            SwalAlert.fire({ text: "ลบข้อมูล! ออกจากระบบเรียบร้อยแล้ว" });
-            loadingTrash("hide");
-          }, 2500);
-        }
-      }
-
       // เพิ่มหรือแก้ไขข้อมูลผู้ใช้งาน
-      function addOrEditUser(res) {
-        loadingEdit("show");
-        setTimeout(function () {
-          SwalAlert.fire({
-            text: "เพิ่ม, แก้ไขข้อมูล ประวิตร rfid: 9876543210 เรียบร้อยแล้ว",
-          });
-          loadingEdit("hide");
-        }, 2500);
-      }
+      $(this.form).submit((e) => {
+        e.preventDefault();
+        this._addOrEditUserData();
+      });
     }
   }
 </script>
@@ -3016,8 +3222,8 @@
 <!-- บันทึกการปฏิบัติงาน -->
 <script>
   class CreateDataLogging {
-    constructor(role, containerId, options) {
-      this.role = role;
+    constructor(containerId, options) {
+      this.role = JSON.parse(localStorage.getItem(storageKey.userData)).role;
       this.container = document.getElementById(containerId);
       this.setupTable = options.setupTable;
       this.tableId = options.tableId;
@@ -3040,7 +3246,7 @@
             console.log(result.message);
           }
         })
-        .getAuditTrail_data(localStorage.getItem(storageKey.jsonWebToken));
+        .getAuditTrailData(localStorage.getItem(storageKey.jsonWebToken));
     }
 
     render(dataset) {
@@ -3106,18 +3312,11 @@
       // Create table body
       this.tbody = document.createElement("tbody");
 
-      Object.entries(this.dataset).forEach(([timestamp, rowData]) => {
+      this.dataset.forEach((rowData) => {
         const row = document.createElement("tr");
-        Object.entries(this.headers).forEach(([key, header], index) => {
+        rowData.forEach((data) => {
           const cell = document.createElement("td");
-          const data = rowData[key];
-
-          // timestamp
-          if (index === 0) {
-            cell.textContent = timestamp;
-          } else {
-            cell.textContent = data || "";
-          }
+          cell.textContent = data || "";
           row.appendChild(cell);
         });
 

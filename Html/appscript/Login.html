@@ -52,25 +52,24 @@
   const submitButton = document.querySelector("button[type='submit']");
 
   $(document).ready(function () {
-    if (localStorage.getItem("jsonWebToken")) {
+    if (localStorage.getItem(storageKey.jsonWebToken)) {
       loadingPage("show");
       google.script.run
         .withSuccessHandler((res) => {
           loadingPage("hide");
           if (res.message === "success") {
-            localStorage.setItem("jsonWebToken", res.jsonWebToken);
-            localStorage.setItem("userData", res.userData);
+            localStorage.setItem(storageKey.jsonWebToken, res.jsonWebToken);
+            localStorage.setItem(storageKey.userData, JSON.stringify(res.userData));
             createSidebarMenu(res.userData);
             $(".login-page").addClass("d-none");
             $(".main-pages").removeClass("d-none");
           } else {
-            console.log(res.message);
             localStorage.clear();
             $(".login-page").removeClass("d-none");
             $(".main-pages").addClass("d-none");
           }
         })
-        .validateToken(localStorage.getItem("jsonWebToken"));
+        .validateToken(localStorage.getItem(storageKey.jsonWebToken));
     } else {
       $(".login-page").removeClass("d-none");
       $(".main-pages").addClass("d-none");
@@ -83,29 +82,31 @@
     submitButton.disabled = true;
     google.script.run
       .withSuccessHandler((res) => {
-        submitButton.disabled = true;
+        submitButton.disabled = false;
 
         if (res.message === "success") {
-          localStorage.setItem("jsonWebToken", res.jsonWebToken);
-          localStorage.setItem("userData", res.userData);
+          localStorage.setItem(storageKey.jsonWebToken, res.jsonWebToken);
+          localStorage.setItem(storageKey.userData, JSON.stringify(res.userData));
           createSidebarMenu(res.userData);
           $(".login-page").addClass("d-none");
           $(".main-pages").removeClass("d-none");
         } else {
           submitButton.innerHTML = "เข้าสู่ระบบ";
           localStorage.clear();
-          console.log(res.message);
 
           if (res.message === "password is incorrect!") {
-            const passwordSpan = passwordEl
-              .closest(".form-input")
-              .querySelector("span");
+            const passwordDiv = passwordEl.closest(".form-input");
+            passwordDiv.classList.remove("was-validated");
+            passwordEl.classList.add("is-invalid");
+            const passwordSpan = passwordDiv.querySelector("span");
             passwordSpan.textContent = "รหัสผ่านไม่ถูกต้อง";
           } else {
-            const usernameSpan = usernameEl
-              .closest(".form-input")
-              .querySelector("span");
+            const usernameDiv = usernameEl.closest(".form-input");
+            usernameDiv.classList.remove("was-validated");
+            usernameEl.classList.add("is-invalid");
+            const usernameSpan = usernameDiv.querySelector("span");
             usernameSpan.textContent = "ไม่พบข้อมูลผู้ใช้งาน";
+            passwordEl.value = "";
           }
         }
       })
@@ -113,16 +114,18 @@
   });
 
   usernameEl.addEventListener("keyup", function () {
-    const usernameSpan = usernameEl
-      .closest(".form-input")
-      .querySelector("span");
+    const usernameDiv = this.closest(".form-input");
+    usernameDiv.classList.add("was-validated");
+    this.classList.remove("is-invalid");
+    const usernameSpan = usernameDiv.querySelector("span");
     usernameSpan.textContent = "";
   });
 
   passwordEl.addEventListener("keyup", function () {
-    const passwordSpan = passwordEl
-      .closest(".form-input")
-      .querySelector("span");
+    const passwordDiv = this.closest(".form-input");
+    passwordDiv.classList.add("was-validated");
+    this.classList.remove("is-invalid");
+    const passwordSpan = passwordDiv.querySelector("span");
     passwordSpan.textContent = "";
   });
 </script>

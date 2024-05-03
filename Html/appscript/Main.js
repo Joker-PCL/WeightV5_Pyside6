@@ -35,22 +35,22 @@ function globalVariables() {
 
     // ข้อมูลของระบบชั่ง 10 เม็ด
     folderId10s: "1J7jfGUshmFox9RHK2cqfvCGTaQcncOKx", // ID โฟล์เดอร์แฟ้มข้อมูลน้ำหนัก 10 เม็ด
+    inspectorCol: 7, // คลอลั่มลงชื่อผู้ตรวจสอบ
     shWeight10s: "WEIGHT", // ข้อมูลน้ำหนัก 10 เม็ด
-    setupRange10s: "A2:A16", // ตำแหน่ง ข้อมูลการตั้งค่าน้ำหนัก 10 เม็ด
-    checkSetupRange10s: "A15", // ตำแหน่ง ลงชื่อตรวจสอบการตั้งค่าน้ำหนัก 10 เม็ด
-    checkEndjobRange10s: "A16", // ตำแหน่ง ลงชื่อ endjob การตั้งค่าน้ำหนัก 10 เม็ด
+    setupRange10s: "B2:B17", // ตำแหน่ง ข้อมูลการตั้งค่าน้ำหนัก 10 เม็ด
+    preparedRange10s: "B14", // ตำแหน่ง ลงชื่อการตั้งค่าน้ำหนัก 10 เม็ด
+    approvedRange10s: "B15", // ตำแหน่ง ลงชื่อตรวจสอบการตั้งค่าน้ำหนัก 10 เม็ด
+    finished10s: "B16", // ตำแหน่ง ลงชื่อจบการผลิต น้ำหนัก 10 เม็ด
+    finishTime10s: "B17", // ตำแหน่ง ลงเวลาจบการผลิต น้ำหนัก 10 เม็ด
 
     // ข้อมูลระบบชั่ง IPC
     folderIdIPC: "1qtpt0eAp_IOWe1BEh-x75nM5FXNy9tdW", // ID โฟล์เดอร์แฟ้มข้อมูล IPC
     shWeightIPC: "Weight", // ข้อมูลน้ำหนัก IPC
-    setupRangeIPC: "A4:A20", // ตำแหน่ง ข้อมูลการตั้งค่าน้ำหนัก IPC
-    checkSetupRangeIPC: "A19", // ตำแหน่ง ลงชื่อตรวจสอบการตั้งค่าน้ำหนัก IPC
-    checkEndjobRangeIPC: "A20", // ตำแหน่ง ลงชื่อ endjob การตั้งค่าน้ำหนัก IPC
-    summaryRecordRangeIPC: "G2:G4", // ตำแหน่ง สรุปผลน้ำหนัก IPC
-    dataRangeIPC: ["A17:B68", "D17:E68", "G17:H68", "J17:K68"], // ตำแหน่ง ข้อมูลการน้ำหนัก IPC
-    summaryRangeIPC: ["A69:B78", "D69:E78", "G69:H78", "J69:K78"], // ตำแหน่ง ข้อมูลการน้ำหนัก IPC
-    timestampRangeIPC: ["A17", "D17", "G17", "J17"], // ตำแหน่งบันทึกเวลา IPC
-    tabletDetailRangeIPC: ["B73", "E73", "H73", "K73"], // ตำแหน่งรายละเอียดเม็ดยา IPC
+    setupRangeIPC: "B2:B19", // ตำแหน่ง ข้อมูลการตั้งค่าน้ำหนัก IPC
+    preparedRangeIPC: "B16", // ตำแหน่ง ลงชื่อการตั้งค่าน้ำหนัก IPC
+    approvedRangeIPC: "B17", // ตำแหน่ง ลงชื่อตรวจสอบการตั้งค่าน้ำหนัก IPC
+    finished10s: "B18", // ตำแหน่ง ลงชื่อจบการผลิต น้ำหนัก IPC
+    finishTime10s: "B19", // ตำแหน่ง ลงเวลาจบการผลิต น้ำหนัก IPC
   };
 
   return Variables;
@@ -66,6 +66,7 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+// ********* ลงชื่อเข้าใช้งาน ********* \\
 function login(form) {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = spreadsheet.getSheetByName(globalVariables().shUserList);
@@ -98,21 +99,7 @@ function login(form) {
   }
 }
 
-function logout() {
-  clearCookie();
-  let htmlOutput = HtmlService.createTemplateFromFile("Login");
-  htmlOutput.username = "";
-  htmlOutput.message1 = "";
-  htmlOutput.message2 = "";
-  return htmlOutput
-    .evaluate()
-    .setFaviconUrl(globalVariables().icon)
-    .addMetaTag(...globalVariables().metaTag08)
-    .setTitle("Login")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-//********* ส่งไลน์
+// ********* ส่งไลน์ ********* \\
 function sendLineNotify(message, jsonWebToken) {
   if (!jsonWebToken) {
     jsonWebToken = globalVariables().alert_token;

@@ -157,37 +157,64 @@ function getWeighingData_IPC(jwtToken, url) {
       remarksData: remarksData.reverse(),
     };
 
-    return {result: verifyToken, dataset: dataset};
+    return { result: verifyToken, dataset: dataset };
   }
 }
 
 // ลงชื่อผู้ตรวจสอบการตั้งค่า
-function setting_addChecker_ipc(url, username, detail) {
-  let spreadsheet = SpreadsheetApp.openByUrl(url);
-  let sheet = spreadsheet.getSheetByName(globalVariables().shSetWeight);
+// ลงชื่อผู้ตรวจสอบการตั้งค่า
+function signInToCheckTheSettingsIPC({ url, jwtToken }) {
+  const verifyToken = validateToken(jwtToken);
 
-  sheet.getRange(globalVariables().checkSetupRangeIPC).setValue(username);
+  if (verifyToken.message != "success") {
+    return verifyToken.message;
+  } else {
+    const spreadsheet = SpreadsheetApp.openByUrl(url);
+    const sheet = spreadsheet.getSheetByName(globalVariables().shSetWeight);  // เข้าถึง sheet ตั้งค่าน้ำหนักยา
+    const data_setting = sheet 
+      .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
+      .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
+      .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
 
-  // บันทึกการปฏิบัติงาน
-  let auditTrial_msg = `ระบบเครื่องชั่ง ${detail.type}\
-                      \n${detail.product}\
-                      \n${detail.lot}\
-                      \n${detail.tabletID}`;
+    // ลงชื่อผู้ตรวจสอบการตั้งค่า
+    sheet
+      .getRange(globalVariables().approvedRangeIPC)
+      .setValue(verifyToken.userData.nameTH);
 
-  audit_trail("ลงชื่อตรวจสอบการตั้งค่า", auditTrial_msg, username);
+    // สร้างข้อมูลการตั้งค่าน้ำหนักยา
+    const settingDetail = {
+      productName: data_setting[0][1], // ชื่อยา
+      lot: data_setting[1][1], // เลขที่ผลิต
+      tabletID: data_setting[3][1], // เครื่องตอก
+    };
 
-  const timeStamp = new Date().toLocaleString("en-GB", {
-    timeZone: "Asia/Jakarta",
-  });
-  const approval_msg = `🌈ระบบเครื่องชั่ง ${detail.type}
-    \n🔰${detail.tabletID}\
-    \n🔰${detail.lot}\
-    \n🔰${detail.product}
-    \n⪼ ตรวจสอบการตั้งค่าโดย\
-    \n⪼ คุณ ${username}\
-    \n⪼ ${timeStamp}`;
+    // บันทึกการปฏิบัติงาน
+    const details = `ระบบเครื่องชั่ง IPC\
+                    \nชื่อยา ${settingDetail.productName}\
+                    \nเลขที่ผลิต ${settingDetail.lot}\
+                    \nเครื่องตอก ${settingDetail.tabletID}`;
 
-  sendLineNotify(approval_msg, globalVariables().approval_token);
+    recordAuditTrailData({
+      list: "ลงชื่อตรวจสอบการตั้งค่า",
+      details: details,
+      username: verifyToken.userData.nameTH,
+      role: verifyToken.userData.role,
+    });
+
+    const timestamp = new Date().toLocaleString("en-GB", {
+      timeZone: "Asia/Jakarta",
+    });
+    const approval_msg = `🌈ระบบเครื่องชั่ง IPC\
+                        \nชื่อยา ${settingDetail.productName}\
+                        \nเลขที่ผลิต ${settingDetail.lot}\
+                        \nเครื่องตอก ${settingDetail.tabletID}\
+                        \n⪼ ตรวจสอบการตั้งค่าโดย\
+                        \n⪼ คุณ ${verifyToken.userData.nameTH}\
+                        \n⪼ ${timestamp}`;
+
+    sendLineNotify(approval_msg, globalVariables().approval_token);
+    return { result: verifyToken };
+  }
 }
 
 // บันทึกสรุปข้อมูลการชั่งน้ำหนัก

@@ -56,7 +56,7 @@ function getProductionLists10s(jwtToken) {
 }
 
 // ดึงข้อมูลจากชีตปัจจุบัน จาก url ของชีต 10 เม็ด
-function getWeighingData_10s(jwtToken, url) {
+function getWeighingData10s({ url, jwtToken }) {
   const verifyToken = validateToken(jwtToken);
 
   if (verifyToken.message != "success") {
@@ -154,96 +154,91 @@ function getWeighingData_10s(jwtToken, url) {
 }
 
 // ลงชื่อผู้ตรวจสอบการตั้งค่า
-function setting_addChecker_10s(url, username, detail) {
-  let ss = SpreadsheetApp.openByUrl(url);
-  let sheet = ss.getSheetByName(globalVariables().shSetWeight);
+function signInToCheckTheSettings10s({ url, jwtToken }) {
+  const verifyToken = validateToken(jwtToken);
 
-  sheet.getRange(globalVariables().checkSetupRange10s).setValue(username);
+  if (verifyToken.message != "success") {
+    return verifyToken.message;
+  } else {
+    const spreadsheet = SpreadsheetApp.openByUrl(url);
+    const sheet = spreadsheet.getSheetByName(globalVariables().shSetWeight); // เข้าถึง sheet ตั้งค่าน้ำหนักยา
+    const data_setting = sheet
+      .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
+      .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
+      .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
 
-  // บันทึกการปฏิบัติงาน
-  let auditTrial_msg = `ระบบเครื่องชั่ง ${detail.type}\
-                      \n${detail.product}\
-                      \n${detail.lot}\
-                      \n${detail.tabletID}`;
+    // ลงชื่อผู้ตรวจสอบการตั้งค่า
+    sheet
+      .getRange(globalVariables().approvedRange10s)
+      .setValue(verifyToken.userData.nameTH);
 
-  audit_trail("ลงชื่อตรวจสอบการตั้งค่า", auditTrial_msg, username);
+    // สร้างข้อมูลการตั้งค่าน้ำหนักยา
+    const settingDetail = {
+      productName: data_setting[0][1], // ชื่อยา
+      lot: data_setting[1][1], // เลขที่ผลิต
+      tabletID: data_setting[3][1], // เครื่องตอก
+    };
 
-  const timeStamp = new Date().toLocaleString("en-GB", {
-    timeZone: "Asia/Jakarta",
-  });
-  const approval_msg = `🌈ระบบเครื่องชั่ง ${detail.type}
-    \n🔰${detail.tabletID}\
-    \n🔰${detail.lot}\
-    \n🔰${detail.product}
-    \n⪼ ตรวจสอบการตั้งค่าโดย\
-    \n⪼ คุณ ${username}\
-    \n⪼ ${timeStamp}`;
+    // บันทึกการปฏิบัติงาน
+    const details = `ระบบเครื่องชั่ง 10 เม็ด\
+                    \nชื่อยา ${settingDetail.productName}\
+                    \nเลขที่ผลิต ${settingDetail.lot}\
+                    \nเครื่องตอก ${settingDetail.tabletID}`;
 
-  sendLineNotify(approval_msg, globalVariables().approval_token);
-}
+    recordAuditTrailData({
+      list: "ลงชื่อตรวจสอบการตั้งค่า",
+      details: details,
+      username: verifyToken.userData.nameTH,
+      role: verifyToken.userData.role,
+    });
 
-// บันทึกลัษณะของเม็ดยา
-function recodeCharacteristics(url, date_time, value) {
-  let ss = SpreadsheetApp.openByUrl(url);
-  let sheet = ss.getSheetByName(globalVariables().shWeight10s);
-  let data = sheet.getDataRange().getDisplayValues();
+    const timestamp = new Date().toLocaleString("en-GB", {
+      timeZone: "Asia/Jakarta",
+    });
+    const approval_msg = `🌈ระบบเครื่องชั่ง 10 เม็ด\
+                        \nชื่อยา ${settingDetail.productName}\
+                        \nเลขที่ผลิต ${settingDetail.lot}\
+                        \nเครื่องตอก ${settingDetail.tabletID}\
+                        \n⪼ ตรวจสอบการตั้งค่าโดย\
+                        \n⪼ คุณ ${verifyToken.userData.nameTH}\
+                        \n⪼ ${timestamp}`;
 
-  for (let i = 4; i < data.length; i++) {
-    if (data[i][0] == date_time) {
-      sheet.getRange(i + 1, 7).setValue(value);
-      return;
-    }
-  }
-}
-
-// บันทึกค่าความหนาของเม็ดยา
-function recordThickness(form) {
-  let ss = SpreadsheetApp.openByUrl(form.thickness_url);
-  let sheet = ss.getSheetByName(globalVariables().shWeight10s);
-  let data = sheet.getDataRange().getDisplayValues();
-
-  let dataList = [
-    form.thickness1,
-    form.thickness2,
-    form.thickness3,
-    form.thickness4,
-    form.thickness5,
-    form.thickness6,
-    form.thickness7,
-    form.thickness8,
-    form.thickness9,
-    form.thickness10,
-  ];
-
-  for (let i = 4; i < data.length; i++) {
-    if (data[i][0] == form.thickness_timestamp) {
-      sheet.getRange(i + 1, 10, 1, 10).setValues([dataList]);
-      return { date_time: form.thickness_timestamp, dataList };
-    }
+    sendLineNotify(approval_msg, globalVariables().approval_token);
+    return { result: verifyToken };
   }
 }
 
 // ลงชื่อผู้ตรวจสอบ
-function addChecker(url, username) {
-  let ss = SpreadsheetApp.openByUrl(url);
-  let sheet = ss.getSheetByName(globalVariables().shWeight10s);
+function signInToCheckTheWeighingData({ url, jwtToken }) {
+  const verifyToken = validateToken(jwtToken);
 
-  sheet.getRange(sheet.getLastRow(), 9).setValue(username);
+  if (verifyToken.message != "success") {
+    return verifyToken.message;
+  } else {
+    const spreadsheet = SpreadsheetApp.openByUrl(url);
+    const sheet = spreadsheet.getSheetByName(globalVariables().shWeight10s);
+    const row = sheet.getLastRow();
+    sheet
+      .getRange(row, globalVariables().inspectorCol)
+      .setValue(verifyToken.userData.nameTH);
+
+    return { result: verifyToken, inspectorName: verifyToken.userData.nameTH };
+  }
 }
 
 // สิ้นสุดการผลิต
 function endJob_10s(url, username) {
-  let ss = SpreadsheetApp.openByUrl(url);
+  let spreadsheet = SpreadsheetApp.openByUrl(url);
   let today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Jakarta" });
   let date = today.split(",")[0];
 
-  let shSetWeight = ss.getSheetByName(globalVariables().shSetWeight);
+  let shSetWeight = spreadsheet.getSheetByName(globalVariables().shSetWeight);
   let tabletID = shSetWeight.getRange("A2").getDisplayValue();
   let productName = shSetWeight.getRange("A4").getDisplayValue();
   let lot = shSetWeight.getRange("A5").getDisplayValue();
 
   // Set number format
-  let shData = ss.getSheetByName(globalVariables().shWeight10s);
+  let shData = spreadsheet.getSheetByName(globalVariables().shWeight10s);
   shData.getRange("C5:E").setNumberFormat("0.000");
   shData.getRange("J5:S").setNumberFormat("0.00");
 
@@ -262,30 +257,33 @@ function endJob_10s(url, username) {
 
   // จัดเก็บข้อมูลไปยังโฟล์เดอร์
   let folder = DriveApp.getFolderById(globalVariables().folderId10s);
-  let newSh = ss.copy(`${lot}_${productName}_${tabletID}_${date}`);
+  let newSh = spreadsheet.copy(`${lot}_${productName}_${tabletID}_${date}`);
   let shID = newSh.getId(); // get newSheetID
   let file = DriveApp.getFileById(shID);
 
   folder.addFile(file); // ย้ายไฟล์ไปยังแฟ้มเก็บข้อมูล
 
   // ลบชีตที่ไม่ใช่ชีตหลักออก
-  let shName = ss.getSheets();
+  let shName = spreadsheet.getSheets();
   for (i = 0; i < shName.length; i++) {
     let sh = shName[i].getName();
     if (sh == "WEIGHT" || sh == "กราฟ" || sh == "Remark" || sh == "Setting") {
       continue;
     } else {
-      ss.deleteSheet(shName[i]);
+      spreadsheet.deleteSheet(shName[i]);
     }
   }
 
-  ss.getSheetByName(globalVariables().shWeight10s)
+  spreadsheet
+    .getSheetByName(globalVariables().shWeight10s)
     .getRange("A5:S")
     .clearContent();
-  ss.getSheetByName(globalVariables().shRemarks)
+  spreadsheet
+    .getSheetByName(globalVariables().shRemarks)
     .getRange("A3:F")
     .clearContent();
-  ss.getSheetByName(globalVariables().shSetWeight)
+  spreadsheet
+    .getSheetByName(globalVariables().shSetWeight)
     .getRange("A3:A16")
     .setValue("xxxxx");
 
