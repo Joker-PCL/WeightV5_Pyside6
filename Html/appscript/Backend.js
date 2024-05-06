@@ -161,7 +161,7 @@ function recordAuditTrailData({ list, details, username, role }) {
   let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = spreadsheet.getSheetByName(globalVariables().shAudit_log);
   let timestamp = new Date().toLocaleString("en-GB", {
-    timeZone: "Asia/Jakarta",
+    timeZone: "Asia/Bangkok",
   });
 
   sheet.appendRow([timestamp, list, details, username, role]);
@@ -534,3 +534,4 @@ function deleteUser({ form, jwtToken }) {
     }
   }
 }
+

@@ -1,5 +1,5 @@
 // ดึงข้อมูลชีตทั้งหมดที่อยู่ในฐานข้อมูล สร้าง dropdown list
-function getProductionListsIpc(jwtToken) {
+function getProductionListsIPC(jwtToken) {
   const verifyToken = validateToken(jwtToken);
 
   if (verifyToken.message != "success") {
@@ -57,10 +57,10 @@ function getProductionListsIpc(jwtToken) {
 }
 
 // ดึงข้อมูลจากชีต จากหมายเลขเครื่องตอก URL
-function getWeighingData_IPC(jwtToken, url) {
+function getWeighingDataIPC(jwtToken, url) {
   const verifyToken = validateToken(jwtToken);
 
-  if (verifyToken.message != "success") {
+  if (verifyToken.message == "success") {
     return verifyToken.message;
   } else {
     // const url = "https://docs.google.com/spreadsheets/d/1Z_yI1KQp2YCoDHp8T3Zs5Pw1JMVt3thdrxUnArUv-bo/edit#gid=596757621";
@@ -129,7 +129,6 @@ function getWeighingData_IPC(jwtToken, url) {
           }
         });
 
-        console.log(rowData);
         weighingData.push(rowData);
       }
     });
@@ -162,7 +161,6 @@ function getWeighingData_IPC(jwtToken, url) {
 }
 
 // ลงชื่อผู้ตรวจสอบการตั้งค่า
-// ลงชื่อผู้ตรวจสอบการตั้งค่า
 function signInToCheckTheSettingsIPC({ url, jwtToken }) {
   const verifyToken = validateToken(jwtToken);
 
@@ -171,7 +169,7 @@ function signInToCheckTheSettingsIPC({ url, jwtToken }) {
   } else {
     const spreadsheet = SpreadsheetApp.openByUrl(url);
     const sheet = spreadsheet.getSheetByName(globalVariables().shSetWeight);  // เข้าถึง sheet ตั้งค่าน้ำหนักยา
-    const data_setting = sheet 
+    const data_setting = sheet
       .getDataRange() // ดึงข้อมูลทั้งหมดที่อยู่ใน sheet
       .getDisplayValues() // ดึงข้อมูลแบบที่แสดงผลบนหน้าจอ
       .slice(1); // ตัดข้อมูลส่วนหัวทิ้ง
@@ -202,12 +200,12 @@ function signInToCheckTheSettingsIPC({ url, jwtToken }) {
     });
 
     const timestamp = new Date().toLocaleString("en-GB", {
-      timeZone: "Asia/Jakarta",
+      timeZone: "Asia/Bangkok",
     });
     const approval_msg = `🌈ระบบเครื่องชั่ง IPC\
-                        \nชื่อยา ${settingDetail.productName}\
-                        \nเลขที่ผลิต ${settingDetail.lot}\
-                        \nเครื่องตอก ${settingDetail.tabletID}\
+                        \n🔰ชื่อยา ${settingDetail.productName}\
+                        \n🔰เลขที่ผลิต ${settingDetail.lot}\
+                        \n🔰เครื่องตอก ${settingDetail.tabletID}\n
                         \n⪼ ตรวจสอบการตั้งค่าโดย\
                         \n⪼ คุณ ${verifyToken.userData.nameTH}\
                         \n⪼ ${timestamp}`;
@@ -217,35 +215,10 @@ function signInToCheckTheSettingsIPC({ url, jwtToken }) {
   }
 }
 
-// บันทึกสรุปข้อมูลการชั่งน้ำหนัก
-function summaryRecord_IPC(url, min, max, average) {
-  let spreadsheet = SpreadsheetApp.openByUrl(url);
-  let sheet = spreadsheet.getSheetByName(globalVariables().shSetWeight);
-  let ranges = sheet.getRange(globalVariables().summaryRecordRangeIPC);
-  ranges.setValues([[min], [max], [average]]);
-  ranges.setNumberFormats([["0.000"], ["0.000"], ["0.000"]]);
-}
-
-// บันทึกลัษณะของเม็ดยา
-function setTabletDetail_IPC(url, sheetName, date_time, text) {
-  let spreadsheet = SpreadsheetApp.openByUrl(url);
-  let sheet = spreadsheet.getSheetByName(sheetName);
-
-  let ranges_getTimestamp = globalVariables().timestampRangeIPC;
-  let ranges_setText = globalVariables().tabletDetailRangeIPC;
-
-  ranges_getTimestamp.forEach((range, i) => {
-    let timeStamp = sheet.getRange(range).getDisplayValue();
-    if (timeStamp == date_time) {
-      sheet.getRange(ranges_setText[i]).setValue(text);
-    }
-  });
-}
-
 // สิ้นสุดการผลิต
 function endJob_IPC(url, username) {
   let spreadsheet = SpreadsheetApp.openByUrl(url);
-  let today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Jakarta" });
+  let today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Bangkok" });
   let date = today.split(",")[0];
 
   let shSetWeight = spreadsheet.getSheetByName(globalVariables().shSetWeight);
@@ -311,4 +284,139 @@ function endJob_IPC(url, username) {
     .setValue("xxxxx");
 
   return getCurrentData_IPC(url);
+}
+
+// สิ้นสุดการผลิต
+function endOfProductionIPC() {
+  const url = "https://docs.google.com/spreadsheets/d/1Z_yI1KQp2YCoDHp8T3Zs5Pw1JMVt3thdrxUnArUv-bo/edit#gid=469370456";
+  createPdfIPC("jwtToken", url)
+}
+
+function createPdfIPC(jwtToken, url) {
+  const getData = getWeighingDataIPC(jwtToken, url);
+  // if(getData.result.message == "success")
+  const settingDetail = getData.dataset.settingDetail;
+  const weighingData = getData.dataset.weighingData.reverse();
+  const remarksData = getData.dataset.remarksData.reverse();
+
+  const tempFolder = DriveApp.getFolderById('193sgRb83rPazPGAFOcidFaof6bgqov1J'); // folder Slide
+  const tempSlide = DriveApp.getFileById('1dOF4sV3mBxEyyidPnRV16wYnRQpQJmdoOdZ7ojSNbOo'); // Templete SlideID
+  const newSlideCopy = tempSlide.makeCopy(tempFolder);
+  const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Bangkok' });
+  newSlideCopy.setName([settingDetail.lot, settingDetail.productName, today].join('_'));
+
+  const newSlide = SlidesApp.openById(newSlideCopy.getId());
+
+  const slides = newSlide.getSlides();
+  const detailSlide = slides[0];
+  const remarksSlide = slides[1];
+  const weighingSlide = slides[2];
+
+  newSlide.replaceAllText("{productname}", settingDetail.productName);
+  newSlide.replaceAllText("{lot}", settingDetail.lot);
+  newSlide.replaceAllText("{balanceID}", settingDetail.balanceID);
+  newSlide.replaceAllText("{tabletID}", settingDetail.tabletID);
+  newSlide.replaceAllText("{punches}", settingDetail.numberPunches);
+  newSlide.replaceAllText("{numtablets}", settingDetail.numberTablets);
+  newSlide.replaceAllText("{meanWeight}", settingDetail.meanWeight);
+  newSlide.replaceAllText("{percent}", settingDetail.percentWeightVariation);
+  newSlide.replaceAllText("{AVGmin}", settingDetail.meanWeightAvgMin);
+  newSlide.replaceAllText("{AVGmax}", settingDetail.meanWeightAvgMax);
+  newSlide.replaceAllText("{IHmin}", settingDetail.meanWeightInhouseMin);
+  newSlide.replaceAllText("{IHmax}", settingDetail.meanWeightInhouseMax);
+  newSlide.replaceAllText("{REGmin}", settingDetail.meanWeightRegMin);
+  newSlide.replaceAllText("{REGmax}", settingDetail.meanWeightRegMax);
+  newSlide.replaceAllText("{prepared}", settingDetail.prepared);
+  newSlide.replaceAllText("{approved}", settingDetail.approved);
+  newSlide.replaceAllText("{finished}", settingDetail.finished);
+  newSlide.replaceAllText("{finishTime}", settingDetail.finishTime);
+
+  const remarksTable = remarksSlide.getTables()[0];
+  remarksData.forEach((dataRow, index) => {
+    if (index > 0 && (remarksTable.getNumRows() - 1) < remarksData.length) {
+      remarksTable.appendRow();
+    }
+
+    const row = index + 1;
+    remarksTable.getRow(row).getCell(0).getText().setText(dataRow.timestamp);
+    remarksTable.getRow(row).getCell(1).getText().setText(dataRow.issues);
+    remarksTable.getRow(row).getCell(2).getText().setText(dataRow.cause);
+    remarksTable.getRow(row).getCell(3).getText().setText(dataRow.resolve);
+    remarksTable.getRow(row).getCell(4).getText().setText(dataRow.notes);
+    remarksTable.getRow(row).getCell(5).getText().setText(dataRow.recorder);
+    remarksTable.getRow(row).getCell(6).getText().setText(dataRow.role);
+  });
+
+  const numTable = 4;
+  const totalPages = Math.ceil(weighingData.length / numTable);
+  let totalWeight = [];
+  let sumTotalWeight = 0;
+
+  for (let i = 0; i < totalPages; i++) {
+    let slide;
+    if (i == (totalPages - 1)) {
+      slide = weighingSlide
+    }
+    else {
+      slide = weighingSlide.duplicate();
+    }
+
+    slide.move(newSlide.getSlides().length);
+    for (let ix = 0; ix < numTable; ix++) {
+      let dataLength = (numTable * i) + ix;
+      if ((numTable * i) + ix < weighingData.length) {
+        const dataset = weighingData[dataLength];
+        let _timestamp = [];
+        let _weights = [];
+        let sumWeight = 0;
+        dataset.weights.forEach((data) => {
+          _timestamp.push(data.timestamp);
+          _weights.push(data.weight);
+          sumWeight += parseFloat(data.weight);
+
+          if (
+            parseFloat(data.weight) >= parseFloat(settingDetail.meanWeightRegMin) &&
+            parseFloat(data.weight) <= parseFloat(settingDetail.meanWeightRegMax)
+          ) {
+            sumTotalWeight += parseFloat(data.weight);
+            totalWeight.push(parseFloat(data.weight));
+          }
+        });
+
+        const timestamp = _timestamp.join('\n');
+        const weights = _weights.join('\n');
+        const min = Math.min(..._weights).toFixed(3);
+        const max = Math.max(..._weights).toFixed(3);
+        const average = (sumWeight / dataset.weights.length).toFixed(3);
+
+        const table = slide.getTables()[ix];
+        const datetimeCell = table.getRow(0).getCell(0);
+        const timestampCell = table.getRow(2).getCell(0);
+        const weightCell = table.getRow(2).getCell(1);
+        const averageCell = table.getRow(3).getCell(1);
+        const minCell = table.getRow(5).getCell(0);
+        const maxCell = table.getRow(5).getCell(1);
+        const characteristicsCell = table.getRow(6).getCell(1);
+        const operatorCell = table.getRow(7).getCell(1);
+
+        datetimeCell.getText().setText(dataset.datetime);
+        timestampCell.getText().setText(timestamp);
+        weightCell.getText().setText(weights);
+        averageCell.getText().setText(average);
+        minCell.getText().setText(min);
+        maxCell.getText().setText(max);
+        characteristicsCell.getText().setText(dataset.characteristics);
+        operatorCell.getText().setText(dataset.operator);
+
+        if (dataLength == 0) {
+          detailSlide.replaceAllText("{startTime}", dataset.datetime);
+        }
+      }
+    }
+  }
+
+  detailSlide.replaceAllText("{summin}", Math.min(...totalWeight).toFixed(3));
+  detailSlide.replaceAllText("{summax}", Math.max(...totalWeight).toFixed(3));
+  detailSlide.replaceAllText("{sumavg}", (sumTotalWeight / totalWeight.length).toFixed(3));
+
 }

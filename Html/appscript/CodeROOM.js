@@ -193,12 +193,12 @@ function signInToCheckTheSettings10s({ url, jwtToken }) {
     });
 
     const timestamp = new Date().toLocaleString("en-GB", {
-      timeZone: "Asia/Jakarta",
+      timeZone: "Asia/Bangkok",
     });
-    const approval_msg = `🌈ระบบเครื่องชั่ง 10 เม็ด\
-                        \nชื่อยา ${settingDetail.productName}\
-                        \nเลขที่ผลิต ${settingDetail.lot}\
-                        \nเครื่องตอก ${settingDetail.tabletID}\
+    const approval_msg = `🌈ระบบเครื่องชั่ง 10 เม็ด\n
+                        \n🔰ชื่อยา ${settingDetail.productName}\
+                        \n🔰เลขที่ผลิต ${settingDetail.lot}\
+                        \n🔰เครื่องตอก ${settingDetail.tabletID}\n
                         \n⪼ ตรวจสอบการตั้งค่าโดย\
                         \n⪼ คุณ ${verifyToken.userData.nameTH}\
                         \n⪼ ${timestamp}`;
@@ -229,7 +229,7 @@ function signInToCheckTheWeighingData({ url, jwtToken }) {
 // สิ้นสุดการผลิต
 function endJob_10s(url, username) {
   let spreadsheet = SpreadsheetApp.openByUrl(url);
-  let today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Jakarta" });
+  let today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Bangkok" });
   let date = today.split(",")[0];
 
   let shSetWeight = spreadsheet.getSheetByName(globalVariables().shSetWeight);

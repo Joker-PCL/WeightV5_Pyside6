@@ -253,7 +253,7 @@
           value:
             timestamp ||
             new Date().toLocaleString("en-GB", {
-              timeZone: "Asia/Jakarta",
+              timeZone: "Asia/Bangkok",
             }),
         },
       });
@@ -385,7 +385,7 @@
           },
           data: [
             {
-              yValueFormatString: "#.000 เปอร์เซนต์",
+              yValueFormatString: "#.00 เปอร์เซนต์",
               type: "spline",
               color: "#3e95cd",
               showInLegend: true,
@@ -1515,7 +1515,7 @@
             SwalMiniAlert.fire({ title: "ไม่สามารถอัพเดทข้อมูลได้" });
           }
         })
-        .getWeighingData_IPC(
+        .getWeighingDataIPC(
           localStorage.getItem(storageKey.jsonWebToken),
           this.url
         );
