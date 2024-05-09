@@ -378,7 +378,6 @@
       // });
     </script>
 
-    <?!= include('dataTest'); ?>
     <?!= include('JS'); ?>
 
     <!-- สร้างเมนูตามสิทธิ์การใช้งาน, ออกจากระบบ -->
@@ -449,6 +448,14 @@
         link.href = "<?!= getUrl(); ?>";
         link.click();
       }
+
+      // Refresh token
+      function refreshToken(jsonWebToken) {
+        localStorage.setItem(
+          storageKey.jsonWebToken,
+          jsonWebToken
+        );
+      }
     </script>
 
     <!-- สร้างหน้าชั่งน้ำหนัก 10 เม็ด(สิทธิ์การใช้งาน) -->
@@ -504,30 +511,13 @@
                 { issues: "เหตุการที่เกิดการเปลี่ยนแปลง" },
                 { cause: "สาเหตุ" },
                 { resolve: "การแก้ไข" },
-                { notes: "หมายเหตุ" },
                 { recorder: "ผู้บันทึก" },
                 { role: "สิทธิ์" },
               ],
             },
           });
-          google.script.run
-            .withSuccessHandler(({ result, productionLists }) => {
-              loadingData("hide");
-              if (result.message === "success") {
-                localStorage.setItem(
-                  storageKey.jsonWebToken,
-                  result.jsonWebToken
-                );
-                weight10s.createProductionLists(productionLists);
-              } else {
-                console.log(result.message);
-                logout();
-              }
-            })
-            .getProductionLists10s(
-              localStorage.getItem(storageKey.jsonWebToken)
-            );
-
+          
+          weight10s.updateProductionLists();
           createWeighing10sDataPageState = true;
         }
       }
@@ -557,31 +547,13 @@
                 { issues: "เหตุการที่เกิดการเปลี่ยนแปลง" },
                 { cause: "สาเหตุ" },
                 { resolve: "การแก้ไข" },
-                { notes: "หมายเหตุ" },
                 { recorder: "ผู้บันทึก" },
                 { role: "สิทธิ์" },
               ],
             },
           });
 
-          google.script.run
-            .withSuccessHandler(({ result, productionLists }) => {
-              loadingData("hide");
-              if (result.message === "success") {
-                localStorage.setItem(
-                  storageKey.jsonWebToken,
-                  result.jsonWebToken
-                );
-                weightIpc.createProductionLists(productionLists);
-              } else {
-                console.log(result.message);
-                logout();
-              }
-            })
-            .getProductionListsIPC(
-              localStorage.getItem(storageKey.jsonWebToken)
-            );
-
+          weightIpc.updateProductionLists();
           createWeighingIpcDataPageState = true;
         }
       }
@@ -604,10 +576,7 @@
             .withSuccessHandler(({ result, dataSettings }) => {
               // สร้างฟอร์มตั้งค่าน้ำหนักยาของเครื่องตอก
               if (result.message === "success") {
-                localStorage.setItem(
-                  storageKey.jsonWebToken,
-                  result.jsonWebToken
-                );
+                refreshToken(result.jsonWebToken);
                 form_weighing_setup.createSetupForm(dataSettings);
 
                 // สร้างฟอร์มแก้ไขฐานข้อมูลน้ำหนักยา
@@ -662,11 +631,7 @@
             .withSuccessHandler(({ result, dataset }) => {
               loadingData("hide");
               if (result.message === "success") {
-                localStorage.setItem(
-                  storageKey.jsonWebToken,
-                  result.jsonWebToken
-                );
-
+                refreshToken(result.jsonWebToken);
                 dataLogging.render(dataset);
               } else {
                 console.log(result.message);

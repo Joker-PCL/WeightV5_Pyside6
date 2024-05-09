@@ -5,24 +5,29 @@ function getProductionLists10s(jwtToken) {
   if (verifyToken.message != "success") {
     return { result: verifyToken };
   } else {
-    let folderId10s = globalVariables().folderId10s;
-    let folder10s = DriveApp.getFolderById(folderId10s);
-    let contents10s = folder10s.getFiles();
+    const ssMain = SpreadsheetApp.getActiveSpreadsheet();
+    const shTabetLists = ssMain.getSheetByName(globalVariables().shTabetLists);
+    const shProductionLists = ssMain.getSheetByName(
+      globalVariables().shProductionLists
+    );
+    const tabetLists = shTabetLists.getDataRange().getDisplayValues().slice(1);
+    const productionLists = shProductionLists
+      .getDataRange()
+      .getDisplayValues()
+      .slice(1);
+
     let sheetLists10s = [];
 
-    const fileType = "application/vnd.google-apps.spreadsheet";
     if (verifyToken.userData.role != "Operator") {
-      while (contents10s.hasNext()) {
-        let file = contents10s.next();
-        if (file.getMimeType() === fileType) {
-          const tablet_name = file.getName().toUpperCase();
-          const tablet_url_10s = file.getUrl();
+      productionLists.forEach(([filename, type, sheetUrl, slidUrl]) => {
+        if (type === "10S") {
           sheetLists10s.push({
-            name: tablet_name,
-            url: tablet_url_10s,
+            name: filename.toUpperCase(),
+            url: sheetUrl,
+            pdf: slidUrl.replace("edit?usp=drivesdk", "preview"),
           });
         }
-      }
+      });
     }
 
     // จัดเรียงข้อมูลตามวันที่
@@ -38,16 +43,13 @@ function getProductionLists10s(jwtToken) {
       return date1 - date2;
     });
 
-    let ssMain = SpreadsheetApp.getActiveSpreadsheet();
-    let shTabetList = ssMain.getSheetByName(globalVariables().shTabetList);
-
-    let lists = shTabetList.getDataRange().getDisplayValues().slice(1);
-    lists.reverse().forEach((data) => {
+    tabetLists.reverse().forEach((data) => {
       const tablet_name = data[0].toUpperCase();
       const tablet_url_10s = data[3];
       sheetLists10s.push({
         name: `เครื่องตอก ${tablet_name} (LOT. ปัจจุบัน)`,
         url: tablet_url_10s,
+        pdf: null,
       });
     });
 
@@ -60,7 +62,7 @@ function getWeighingData10s({ url, jwtToken }) {
   const verifyToken = validateToken(jwtToken);
 
   if (verifyToken.message != "success") {
-    return verifyToken.message;
+    return { result: verifyToken };
   } else {
     // const url = "https://docs.google.com/spreadsheets/d/1XySGAC8aaywquHFKwr_zBBDpOgj99CF15UHe3P3kYF8/edit?usp=sharing"
     const spreadsheet = SpreadsheetApp.openByUrl(url); // เข้าถึง Spreadsheet
@@ -110,15 +112,17 @@ function getWeighingData10s({ url, jwtToken }) {
         type: row[1],
         weight1: row[2],
         weight2: row[3],
-        characteristics: row[4],
-        operator: row[5],
-        inspector: row[6],
+        average: row[4],
+        percent: row[5],
+        characteristics: row[6],
+        operator: row[7],
+        inspector: row[8],
         thickness: [],
       };
 
       // ข้อมูลความหนา
       for (let i = 0; i < 10; i++) {
-        rowData.thickness.push(row[7 + i]);
+        rowData.thickness.push(row[9 + i]);
       }
 
       // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataObj
@@ -133,9 +137,8 @@ function getWeighingData10s({ url, jwtToken }) {
         issues: row[1],
         cause: row[2],
         resolve: row[3],
-        notes: row[4],
-        recorder: row[5],
-        role: row[6],
+        recorder: row[4],
+        role: row[5],
       };
 
       // นำข้อมูลการชั่งแต่ล่ะครั้งไปเก็บใน dataObj
@@ -158,7 +161,7 @@ function signInToCheckTheSettings10s({ url, jwtToken }) {
   const verifyToken = validateToken(jwtToken);
 
   if (verifyToken.message != "success") {
-    return verifyToken.message;
+    return { result: verifyToken };
   } else {
     const spreadsheet = SpreadsheetApp.openByUrl(url);
     const sheet = spreadsheet.getSheetByName(globalVariables().shSetWeight); // เข้าถึง sheet ตั้งค่าน้ำหนักยา
@@ -203,7 +206,7 @@ function signInToCheckTheSettings10s({ url, jwtToken }) {
                         \n⪼ คุณ ${verifyToken.userData.nameTH}\
                         \n⪼ ${timestamp}`;
 
-    sendLineNotify(approval_msg, globalVariables().approval_token);
+    sendLineNotify(approval_msg, globalVariables().approvalToken);
     return { result: verifyToken };
   }
 }
@@ -213,7 +216,7 @@ function signInToCheckTheWeighingData({ url, jwtToken }) {
   const verifyToken = validateToken(jwtToken);
 
   if (verifyToken.message != "success") {
-    return verifyToken.message;
+    return { result: verifyToken };
   } else {
     const spreadsheet = SpreadsheetApp.openByUrl(url);
     const sheet = spreadsheet.getSheetByName(globalVariables().shWeight10s);
@@ -227,65 +230,284 @@ function signInToCheckTheWeighingData({ url, jwtToken }) {
 }
 
 // สิ้นสุดการผลิต
-function endJob_10s(url, username) {
-  let spreadsheet = SpreadsheetApp.openByUrl(url);
-  let today = new Date().toLocaleString("en-GB", { timeZone: "Asia/Bangkok" });
-  let date = today.split(",")[0];
+function endOfProduction10s({ url, jwtToken }) {
+  const verifyToken = validateToken(jwtToken);
 
-  let shSetWeight = spreadsheet.getSheetByName(globalVariables().shSetWeight);
-  let tabletID = shSetWeight.getRange("A2").getDisplayValue();
-  let productName = shSetWeight.getRange("A4").getDisplayValue();
-  let lot = shSetWeight.getRange("A5").getDisplayValue();
+  if (verifyToken.message != "success") {
+    return { result: verifyToken };
+  } else {
+    const today = new Date().toLocaleString("en-GB", {
+      timeZone: "Asia/Bangkok",
+    });
+    const date = new Date().toLocaleDateString("en-GB", {
+      timeZone: "Asia/Bangkok",
+    });
 
-  // Set number format
-  let shData = spreadsheet.getSheetByName(globalVariables().shWeight10s);
-  shData.getRange("C5:E").setNumberFormat("0.000");
-  shData.getRange("J5:S").setNumberFormat("0.00");
+    const spreadsheet = SpreadsheetApp.openByUrl(url);
+    const shSetWeight = spreadsheet.getSheetByName(
+      globalVariables().shSetWeight
+    );
 
-  // บันทึกคนที่กด ENDJOB
-  shSetWeight
-    .getRange(globalVariables().checkEndjobRange10s)
-    .setValue("จบการผลิตโดย " + username + " วันที่ " + today);
+    // บันทึกชื่อ,วันที่ เวลา จบการผลิต
+    shSetWeight
+      .getRange(globalVariables().finished10s)
+      .setValue(verifyToken.userData.nameTH);
+    shSetWeight.getRange(globalVariables().finishTime10s).setValue(today);
 
-  // บันทึกการปฏิบัติงาน
-  let detail = `ระบบเครื่องชั่ง: 10 เม็ด\
+    // บันทึกการปฏิบัติงาน
+    const productName = shSetWeight
+      .getRange(globalVariables().finishRanges10s.productname)
+      .getDisplayValue();
+    const lot = shSetWeight
+      .getRange(globalVariables().finishRanges10s.lot)
+      .getDisplayValue();
+    const tabletID = shSetWeight
+      .getRange(globalVariables().finishRanges10s.tabletID)
+      .getDisplayValue();
+
+    const details = `ระบบเครื่องชั่ง: 10 เม็ด\
                 \nชื่อยา: ${productName}\
                 \nเลขที่ผลิต: ${lot}\
                 \nเครื่องตอก: ${tabletID}`;
 
-  audit_trail("จบการผลิต", detail, username);
+    recordAuditTrailData({
+      list: "จบการผลิต",
+      details: details,
+      username: verifyToken.userData.nameTH,
+      role: verifyToken.userData.role,
+    });
 
-  // จัดเก็บข้อมูลไปยังโฟล์เดอร์
-  let folder = DriveApp.getFolderById(globalVariables().folderId10s);
-  let newSh = spreadsheet.copy(`${lot}_${productName}_${tabletID}_${date}`);
-  let shID = newSh.getId(); // get newSheetID
-  let file = DriveApp.getFileById(shID);
+    // จัดเก็บข้อมูลไปยังโฟล์เดอร์
+    const folder = DriveApp.getFolderById(globalVariables().folderId10s);
+    const newSh = spreadsheet.copy(`${lot}_${productName}_${tabletID}_${date}`);
+    const shUrl = newSh.getUrl(); // get newSheetID
+    const shID = newSh.getId(); // get newSheetID
+    const file = DriveApp.getFileById(shID);
 
-  folder.addFile(file); // ย้ายไฟล์ไปยังแฟ้มเก็บข้อมูล
+    folder.addFile(file); // ย้ายไฟล์ไปยังแฟ้มเก็บข้อมูล
 
-  // ลบชีตที่ไม่ใช่ชีตหลักออก
-  let shName = spreadsheet.getSheets();
-  for (i = 0; i < shName.length; i++) {
-    let sh = shName[i].getName();
-    if (sh == "WEIGHT" || sh == "กราฟ" || sh == "Remark" || sh == "Setting") {
-      continue;
-    } else {
-      spreadsheet.deleteSheet(shName[i]);
-    }
+    // เคลียร์ข้อมูลชีตต้นฉบับ
+    spreadsheet
+      .getSheetByName(globalVariables().shWeight10s)
+      .getRange(globalVariables().finishRanges10s.clearRanges.weighing)
+      .clearContent();
+    spreadsheet
+      .getSheetByName(globalVariables().shRemarks)
+      .getRange(globalVariables().finishRanges10s.clearRanges.remarks)
+      .clearContent();
+    spreadsheet
+      .getSheetByName(globalVariables().shSetWeight)
+      .getRange(globalVariables().setupRange10s)
+      .setValue(globalVariables().finishRanges10s.clearRanges.settingText);
+
+    return { result: verifyToken, urlCreatePDF: shUrl };
   }
+}
 
-  spreadsheet
-    .getSheetByName(globalVariables().shWeight10s)
-    .getRange("A5:S")
-    .clearContent();
-  spreadsheet
-    .getSheetByName(globalVariables().shRemarks)
-    .getRange("A3:F")
-    .clearContent();
-  spreadsheet
-    .getSheetByName(globalVariables().shSetWeight)
-    .getRange("A3:A16")
-    .setValue("xxxxx");
+// สร้างไฟล์ slide,pdf
+function createPdf10s({ url, jwtToken }) {
+  const getData = getWeighingData10s({ url: url, jwtToken: jwtToken });
+  if (getData.result.message != "success") {
+    return { result: getData.result };
+  } else {
+    const settingDetail = getData.dataset.settingDetail;
+    const weighingData = getData.dataset.weighingData.reverse();
+    const remarksData = getData.dataset.remarksData.reverse();
 
-  return getCurrentData_10s(url);
+    // folder Slide
+    const slideFolder = DriveApp.getFolderById(
+      globalVariables().slideFolderId10s
+    );
+
+    // Templete SlideID
+    const slideTemplate = DriveApp.getFileById(
+      globalVariables().slideTemplateId10s
+    );
+
+    const newSlideCopy = slideTemplate.makeCopy(slideFolder);
+    const today = new Date().toLocaleDateString("en-GB", {
+      timeZone: "Asia/Bangkok",
+    });
+
+    newSlideCopy.setName(
+      [settingDetail.lot, settingDetail.productName, today].join("_")
+    );
+
+    const newSlide = SlidesApp.openById(newSlideCopy.getId());
+
+    const slides = newSlide.getSlides();
+    const detailSlide = slides[0];
+    const remarksSlide = slides[1];
+    const chartSlide = slides[2];
+    const weighingSlide = slides[3];
+
+    // ดึงข้อมูล chart จากชีต, สร้างกราฟ
+    const sheetChart = SpreadsheetApp.openByUrl(url);
+    const chart = sheetChart
+      .getSheetByName(globalVariables().shChart10s)
+      .getCharts()[0];
+    const chartWidth = globalVariables().chartSize.width;
+    const chartHeight = globalVariables().chartSize.height;
+    const chartTop = (newSlide.getPageHeight() - chartHeight) / 2;
+    const chartLeft = (newSlide.getPageWidth() - chartWidth) / 2;
+    chartSlide
+      .insertSheetsChartAsImage(chart)
+      .setWidth(chartWidth)
+      .setHeight(chartHeight)
+      .setTop(chartTop)
+      .setLeft(chartLeft);
+
+    newSlide.replaceAllText("{productname}", settingDetail.productName);
+    newSlide.replaceAllText("{lot}", settingDetail.lot);
+    newSlide.replaceAllText("{balanceID}", settingDetail.balanceID);
+    newSlide.replaceAllText("{tabletID}", settingDetail.tabletID);
+    newSlide.replaceAllText("{meanWeight}", settingDetail.meanWeight);
+    newSlide.replaceAllText("{percent}", settingDetail.percentWeightVariation);
+    newSlide.replaceAllText("{AVGmin}", settingDetail.meanWeightAvgMin);
+    newSlide.replaceAllText("{AVGmax}", settingDetail.meanWeightAvgMax);
+    newSlide.replaceAllText("{IHmin}", settingDetail.meanWeightInhouseMin);
+    newSlide.replaceAllText("{IHmax}", settingDetail.meanWeightInhouseMax);
+    newSlide.replaceAllText("{REGmin}", settingDetail.meanWeightRegMin);
+    newSlide.replaceAllText("{REGmax}", settingDetail.meanWeightRegMax);
+    newSlide.replaceAllText("{TKmin}", settingDetail.thicknessMin);
+    newSlide.replaceAllText("{TKmax}", settingDetail.thicknessMax);
+    newSlide.replaceAllText("{prepared}", settingDetail.prepared);
+    newSlide.replaceAllText("{approved}", settingDetail.approved);
+    newSlide.replaceAllText("{finished}", settingDetail.finished);
+    newSlide.replaceAllText("{finishTime}", settingDetail.finishTime);
+
+    const remarksTable = remarksSlide.getTables()[0];
+    remarksData.forEach((dataRow, index) => {
+      if (index > 0 && remarksTable.getNumRows() - 1 < remarksData.length) {
+        remarksTable.appendRow();
+      }
+
+      const row = index + 1;
+      remarksTable.getRow(row).getCell(0).getText().setText(dataRow.timestamp);
+      remarksTable.getRow(row).getCell(1).getText().setText(dataRow.issues);
+      remarksTable.getRow(row).getCell(2).getText().setText(dataRow.cause);
+      remarksTable.getRow(row).getCell(3).getText().setText(dataRow.resolve);
+      remarksTable.getRow(row).getCell(4).getText().setText(dataRow.recorder);
+      remarksTable.getRow(row).getCell(5).getText().setText(dataRow.role);
+    });
+
+    const numRow = weighingSlide.getTables()[0].getNumRows() - 2;
+    const totalPages = Math.ceil(weighingData.length / numRow);
+    let totalWeight = [];
+    let sumTotalWeight = 0;
+    let totalThickness = [];
+    let sumTotalThickness = 0;
+
+    for (let page = 0; page < totalPages; page++) {
+      let slide;
+      if (page == totalPages - 1) {
+        slide = weighingSlide;
+      } else {
+        slide = weighingSlide.duplicate();
+      }
+
+      const table = slide.getTables()[0];
+      slide.move(newSlide.getSlides().length);
+      for (let row = 0; row < numRow; row++) {
+        const dataLength = numRow * page + row;
+        const currentRow = row + 2;
+        if (dataLength < weighingData.length) {
+          const dataset = weighingData[dataLength];
+          const timestampCell = table.getRow(currentRow).getCell(0);
+          const weight1Cell = table.getRow(currentRow).getCell(1);
+          const weight2Cell = table.getRow(currentRow).getCell(2);
+          const averageCell = table.getRow(currentRow).getCell(3);
+          const percentCell = table.getRow(currentRow).getCell(4);
+          const characteristicsCell = table.getRow(currentRow).getCell(5);
+          const operatorCell = table.getRow(currentRow).getCell(16);
+          const inspectorCell = table.getRow(currentRow).getCell(17);
+
+          timestampCell.getText().setText(dataset.timestamp);
+          weight1Cell.getText().setText(dataset.weight1);
+          weight2Cell.getText().setText(dataset.weight2);
+          averageCell.getText().setText(dataset.average);
+          percentCell.getText().setText(`${dataset.percent}%`);
+          characteristicsCell.getText().setText(dataset.characteristics);
+          operatorCell.getText().setText(dataset.operator);
+          inspectorCell.getText().setText(dataset.inspector);
+
+          if (
+            parseFloat(dataset.weight1) >=
+              parseFloat(settingDetail.meanWeightRegMin) &&
+            parseFloat(dataset.weight1) <=
+              parseFloat(settingDetail.meanWeightRegMax) &&
+            parseFloat(dataset.weight2) >=
+              parseFloat(settingDetail.meanWeightRegMin) &&
+            parseFloat(dataset.weight2) <=
+              parseFloat(settingDetail.meanWeightRegMax)
+          ) {
+            totalWeight.push(parseFloat(dataset.weight1));
+            totalWeight.push(parseFloat(dataset.weight2));
+            sumTotalWeight += parseFloat(dataset.weight1);
+            sumTotalWeight += parseFloat(dataset.weight2);
+          }
+
+          dataset.thickness.forEach((thickness, index) => {
+            const thicknessCell = table.getRow(currentRow).getCell(index + 6);
+            thicknessCell.getText().setText(thickness);
+            if (
+              thickness != "-" ||
+              (parseFloat(thickness) >=
+                parseFloat(settingDetail.meanWeightRegMin) &&
+                parseFloat(thickness) <=
+                  parseFloat(settingDetail.meanWeightRegMax))
+            ) {
+              totalThickness.push(parseFloat(thickness));
+              sumTotalThickness += parseFloat(thickness);
+            }
+          });
+
+          if (dataLength == 0) {
+            detailSlide.replaceAllText("{startTime}", dataset.timestamp);
+          }
+        } else {
+          break;
+        }
+      }
+    }
+
+    detailSlide.replaceAllText(
+      "{sumWTmin}",
+      Math.min(...totalWeight).toFixed(3)
+    );
+    detailSlide.replaceAllText(
+      "{sumWTmax}",
+      Math.max(...totalWeight).toFixed(3)
+    );
+    detailSlide.replaceAllText(
+      "{sumWTavg}",
+      (sumTotalWeight / totalWeight.length).toFixed(3)
+    );
+
+    detailSlide.replaceAllText(
+      "{sumTKmin}",
+      Math.min(...totalThickness).toFixed(2)
+    );
+    detailSlide.replaceAllText(
+      "{sumTKmax}",
+      Math.max(...totalThickness).toFixed(2)
+    );
+    detailSlide.replaceAllText(
+      "{sumTKavg}",
+      (sumTotalThickness / totalThickness.length).toFixed(2)
+    );
+
+    const mainSpreadSheet = SpreadsheetApp.getActiveSpreadsheet();
+    const mainProductionLists = mainSpreadSheet.getSheetByName(
+      globalVariables().shProductionLists
+    );
+    mainProductionLists.appendRow([
+      SpreadsheetApp.openByUrl(url).getName(),
+      "10S",
+      url,
+      newSlideCopy.getUrl(),
+    ]);
+
+    return { result: getData.result };
+  }
 }

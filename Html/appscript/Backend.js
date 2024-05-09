@@ -6,15 +6,17 @@ function getDataSetting(jwtToken) {
     return { result: verifyToken };
   } else {
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheetUsers = spreadsheet.getSheetByName(globalVariables().shUserList);
+    const sheetUsers = spreadsheet.getSheetByName(
+      globalVariables().shUserLists
+    );
     const sheetTablet = spreadsheet.getSheetByName(
-      globalVariables().shTabetList
+      globalVariables().shTabetLists
     );
     const sheetScale = spreadsheet.getSheetByName(
-      globalVariables().shScaleList
+      globalVariables().shBalanceLists
     );
     const sheetProductName = spreadsheet.getSheetByName(
-      globalVariables().shProductNameList
+      globalVariables().shWeighingSettings
     );
 
     const userDataLists = sheetUsers.getDataRange().getDisplayValues().slice(2);
@@ -52,7 +54,7 @@ function getDataSetting(jwtToken) {
       const tabletID = row[0];
       const tabletList = {
         url_10s: row[3],
-        url_ipc: row[5],
+        url_ipc: row[4],
       };
 
       // เพิ่มข้อมูล user_data_list ไปยัง userList
@@ -112,7 +114,7 @@ function getDataSetting(jwtToken) {
   }
 }
 
-// ดึงข้อมูล Main_Setup สำหรับการตั้งค่าทั้งหมด
+// ดึงข้อมูลผู้ใช้งาน
 function getUserDataLists(jwtToken) {
   const verifyToken = validateToken(jwtToken);
 
@@ -120,23 +122,28 @@ function getUserDataLists(jwtToken) {
     return { result: verifyToken };
   } else {
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheetUsers = spreadsheet.getSheetByName(globalVariables().shUserList);
-    const userDataLists = sheetUsers.getDataRange().getDisplayValues().slice(2);
+    const sheetUsers = spreadsheet.getSheetByName(
+      globalVariables().shUserLists
+    );
+    
+    const userDataLists = sheetUsers
+      .getDataRange()
+      .getDisplayValues()
+      .slice(2);
 
     /** สร้างข้อมูลรายชื่อผู้ใช้งาน **/
-    let userLists = {}; // สร้าง data object เก็บข้อมูล
+    let userLists = []; // สร้าง data object เก็บข้อมูล
     userDataLists.forEach((row) => {
-      const rfid = row[0];
-      const userList = {
+      userLists.push({
+        rfid: row[0],
         employeeId: row[1],
         usernameTH: row[2],
         usernameEN: row[3],
         role: row[5],
-      };
-
-      // เพิ่มข้อมูล user_data_list ไปยัง userList
-      userLists[rfid] = userList;
+      });
     });
+
+    userLists.sort((a, b) => a.usernameTH.localeCompare(b.usernameTH, 'th'));
 
     return { result: verifyToken, userDataLists: userLists };
   }
@@ -149,8 +156,8 @@ function getAuditTrailData(jwtToken) {
     return { result: verifyToken };
   } else {
     let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = spreadsheet.getSheetByName(globalVariables().shAudit_log);
-    let dataset = sheet.getDataRange().getDisplayValues().slice(2).reverse();
+    let sheet = spreadsheet.getSheetByName(globalVariables().shAuditLog);
+    let dataset = sheet.getDataRange().getDisplayValues().slice(1).reverse();
 
     return { result: verifyToken, dataset: dataset };
   }
@@ -159,7 +166,7 @@ function getAuditTrailData(jwtToken) {
 // บันทึกการปฏิบัติงาน audit trail
 function recordAuditTrailData({ list, details, username, role }) {
   let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = spreadsheet.getSheetByName(globalVariables().shAudit_log);
+  let sheet = spreadsheet.getSheetByName(globalVariables().shAuditLog);
   let timestamp = new Date().toLocaleString("en-GB", {
     timeZone: "Asia/Bangkok",
   });
@@ -173,9 +180,9 @@ function recordAuditTrailData({ list, details, username, role }) {
 // ค้นหา URL จากหมายเลขเครื่องตอก
 function getSheetUrl(tabletID) {
   let ssMain = SpreadsheetApp.getActiveSpreadsheet();
-  let shTabetList = ssMain.getSheetByName(globalVariables().shTabetList);
+  let shTabetLists = ssMain.getSheetByName(globalVariables().shTabetLists);
 
-  let dataLists = shTabetList.getDataRange().getDisplayValues().slice(1);
+  let dataLists = shTabetLists.getDataRange().getDisplayValues().slice(1);
   let datalist = dataLists.find((data) => {
     return tabletID == data[0];
   });
@@ -220,7 +227,6 @@ function recordRemarksData({ url, form, jwtToken }) {
       form.issues,
       form.cause,
       form.resolves,
-      form.notes,
       verifyToken.userData.nameTH,
       verifyToken.userData.role,
     ];
@@ -231,8 +237,7 @@ function recordRemarksData({ url, form, jwtToken }) {
                       \nnเลขที่ผลิต ${settingDetail.lot}\
                       \nปัญหาที่พบ: ${form.issues}\
                       \nสาเหตุ: ${form.cause}\
-                      \nการแก้ไข: ${form.resolves}\
-                      \nหมายเหตุ: ${form.notes}`;
+                      \nการแก้ไข: ${form.resolves}`;
 
     recordAuditTrailData({
       list: "ลงบันทึก remarks",
@@ -382,7 +387,7 @@ function setupWeight({ form, jwtToken }) {
     \n⪼ กดลิงค์ด้านล่างเพื่อดำเนินการ \
     \n ${globalVariables().shortenedLinks}`;
 
-    // sendLineNotify(approval_msg, globalVariables().approval_token);
+    sendLineNotify(approval_msg, globalVariables().approvalToken);
 
     return { result: verifyToken };
   }
@@ -396,7 +401,9 @@ function addOrEditWeightDatabase({ form, jwtToken }) {
     return { result: verifyToken };
   } else {
     let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = spreadsheet.getSheetByName(globalVariables().shProductNameList);
+    let sheet = spreadsheet.getSheetByName(
+      globalVariables().shWeighingSettings
+    );
     let productLists = sheet.getDataRange().getDisplayValues();
 
     let dataLists = [
@@ -456,7 +463,7 @@ function addOrEditUserData({ form, jwtToken }) {
     return { result: verifyToken };
   } else {
     let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    let sheetUsers = spreadsheet.getSheetByName(globalVariables().shUserList);
+    let sheetUsers = spreadsheet.getSheetByName(globalVariables().shUserLists);
     let users = sheetUsers.getDataRange().getDisplayValues();
 
     let dataLists = [
@@ -509,7 +516,7 @@ function deleteUser({ form, jwtToken }) {
     return { result: verifyToken };
   } else {
     let spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    let sheetUsers = spreadsheet.getSheetByName(globalVariables().shUserList);
+    let sheetUsers = spreadsheet.getSheetByName(globalVariables().shUserLists);
     let users = sheetUsers.getDataRange().getDisplayValues();
 
     // บันทึกการปฏิบัติงาน
@@ -534,4 +541,3 @@ function deleteUser({ form, jwtToken }) {
     }
   }
 }
-

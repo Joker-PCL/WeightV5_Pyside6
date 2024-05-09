@@ -69,6 +69,10 @@ const generateAccessToken = ({ privateKey, userData = {} }) => {
 // ตรวจสอบความถูกต้องของ Token
 const validateToken = (jsonWebToken) => {
   try {
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = spreadsheet.getSheetByName(globalVariables().shUserLists);
+    const dataLists = sheet.getDataRange().getDisplayValues().slice(2);
+
     const headerBase64deCode = Utilities.newBlob(Utilities.base64Decode(jsonWebToken)).getDataAsString();
     const [jwt, privateKey] = headerBase64deCode.split(":");
 
@@ -80,22 +84,34 @@ const validateToken = (jsonWebToken) => {
         const blob = Utilities.newBlob(Utilities.base64Decode(payload)).getDataAsString();
         const { exp, ...userData } = JSON.parse(blob);
         if (new Date(exp * 1000) > new Date()) {
-          const newJsonWebToken = generateAccessToken({ privateKey, userData });
-          return {
-            "message": 'success',
-            "jsonWebToken": newJsonWebToken,
-            "userData": userData
-          };
+          const searchUserdata = dataLists.find((dataList) => {
+            const _nameTH = dataList[2];
+            const _searchPrivateKey = dataList[4];
+            const _role = dataList[5];
+            return _nameTH == userData.nameTH && (_searchPrivateKey == privateKey && _role == userData.role);
+          });
+
+          if(searchUserdata) {
+            const newJsonWebToken = generateAccessToken({ privateKey, userData });
+            return {
+              "message": 'success',
+              "jsonWebToken": newJsonWebToken,
+              "userData": userData
+            };
+          }
+          else {
+            return { message: 'The session has expired' };
+          }
         }
         else {
-          return { message: 'the token has expired' };
+          return { message: 'The token has expired' };
         }
       } else {
-        return { message: 'the token has expired' };
+        return { message: 'The token has expired' };
       }
     }
     else {
-      return { message: 'invalid Signature' };
+      return { message: 'Invalid Signature' };
     }
   }
   catch (error) {
@@ -117,7 +133,7 @@ function testGenerateAccessToken() {
 }
 
 function testParseJwt() {
-  const result = validateToken("ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFM01UUXhNRE16TWpNc0ltbGhkQ0k2TVRjeE5EQTRNVGN5TXl3aWJtRnRaVlJJSWpvaTRMaVQ0TGl4NExpUTRMaWU0TGlsSWl3aWJtRnRaVVZPSWpvaVRtRjBkR0Z3YjI0aUxDSnliMnhsSWpvaVFXUnRhVzRpZlEuYUVTR1pyeVVVUS10dERKQzhSeWI5cV9ESV9VMERWSDl3QjFRR0tsR21wazoyNzQ3MDgyNzkxNDBiYTBkYjU4MTI1OTNkNDM1MjBiMGIwZDEwODEwYjE2NTBhMzBhNzA5ODA1MTY1MjBjMjJiM2UwODg0MTA4NzNm");
+  const result = validateToken("ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFM01UVXdOakUzTnpNc0ltbGhkQ0k2TVRjeE5UQTBNREUzTXl3aWJtRnRaVVZPSWpvaVRtRjBkR0Z3YjI0aUxDSnVZVzFsVkVnaU9pTGd1SlBndUxIZ3VKRGd1SjdndUtVaUxDSnliMnhsSWpvaVFXUnRhVzRpZlEuYzl6VFFwTmRkVkxYbU41enYxbjk1ZG9LZC1uRWtucjQ0R1kxelQ0c1UwTTo4MTllM2Q2YzEzODFlYWM4N2MxNzYxN2U1MTY1ZjM4Yw==");
   console.log(result)
 }
 

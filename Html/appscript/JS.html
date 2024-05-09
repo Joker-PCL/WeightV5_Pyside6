@@ -1,6 +1,6 @@
 <!-- Global variables -->
 <script>
-  const role_definition = {
+  const roleDefinition = {
     Admin: "Admin",
     Superuser: "Superuser",
     Inspector: "Inspector",
@@ -142,20 +142,18 @@
       clear_btn.classList.add("view-menu-clear", "btn", "btn-danger");
       container_group.appendChild(clear_btn);
 
-      const openFile = document.createElement("button");
-      openFile.type = "button";
-      openFile.classList.add("view-menu-file", "btn", "btn-success");
-      openFile.textContent = "PDF";
-      container_group.appendChild(openFile);
+      this.openFile = document.createElement("a");
+      this.openFile.type = "button";
+      this.openFile.target = "_blank";
+      this.openFile.classList.add("view-menu-file", "btn", "btn-success");
+      this.openFile.textContent = "PDF";
+      container_group.appendChild(this.openFile);
 
       this.container.appendChild(container_group);
 
-      $(clear_btn).on(
-        "click",
-        function () {
-          this.input.value = "";
-        }.bind(this)
-      );
+      $(clear_btn).on("click", () => {
+        this.input.value = "";
+      });
     }
   }
 
@@ -223,10 +221,9 @@
       var timestamp = "",
         issues = "",
         cause = "",
-        resolves = "",
-        notes = "";
+        resolves = "";
       if (dataRow.length > 0) {
-        [timestamp, issues, cause, resolves, notes] = dataRow;
+        [timestamp, issues, cause, resolves] = dataRow;
       }
 
       this.form.innerHTML = "";
@@ -298,18 +295,6 @@
         },
       });
       this.form.appendChild(this.resolves);
-
-      this.notes = this.createInput({
-        label: "หมายเหตุ",
-        tagName: "textarea",
-        options: {
-          value: notes || "",
-          placeholder: "หมายเหตุ...",
-          name: "notes",
-          rows: "5",
-        },
-      });
-      this.form.appendChild(this.notes);
 
       const containerSubmitForm = document.createElement("div");
       containerSubmitForm.className = "form-submit-group";
@@ -425,6 +410,7 @@
       this.listsMenu = new CreateViewWeighingMenu("weighing10sList");
       this.viewWeighingMenu = this.listsMenu.container;
       this.listsMenuInput = this.listsMenu.input;
+      this.listsMenuOpenFile = this.listsMenu.openFile;
       this.main_container.appendChild(this.viewWeighingMenu);
 
       this.productionLists = []; // รายการผลิตทั้งหมด
@@ -433,8 +419,8 @@
 
       // สร้างฟอร์มสำหรับบันทึกข้อมูล Remarks
       if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
+        this.role === roleDefinition.Admin ||
+        this.role === roleDefinition.Superuser
       ) {
         this.formRemarks = new FormRemarksModal(
           `${this.containerId}_form`,
@@ -449,16 +435,34 @@
       });
 
       if (result) {
+        if (result.pdf) {
+          this.listsMenuOpenFile.href = result.pdf;
+        } else {
+          this.listsMenuOpenFile.removeAttribute("href");
+        }
         return result.url;
       } else {
         return null;
       }
     }
 
+    updateProductionLists() {
+      google.script.run
+        .withSuccessHandler(({ result, productionLists }) => {
+          loadingData("hide");
+          if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
+            this.createProductionLists(productionLists);
+          } else {
+            logout();
+          }
+        })
+        .getProductionLists10s(localStorage.getItem(storageKey.jsonWebToken));
+    }
+
     createProductionLists(productionLists) {
       // สร้างรายการ autocomplete รายการผลิต 10 เม็ด
       this.productionLists = productionLists;
-
       const dataSource = [];
 
       this.productionLists.forEach((lists) => {
@@ -486,37 +490,71 @@
 
     // โหลดข้อมูลการชั่งน้ำหนัก
     loadWeighingData() {
-      loadingPage("show");
-      this.url = this.searchUrl(this.currentListname);
-
-      google.script.run
-        .withSuccessHandler(({ result, dataset }) => {
-          loadingPage("hide");
-          if (result.message === "success") {
-            SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-            this.render(dataset);
-          } else {
-            SwalMiniAlert.fire({ title: "ไม่สามารถอัพเดทข้อมูลได้" });
-          }
-        })
-        .getWeighingData10s({
-          url: this.url,
-          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
-        });
+      return new Promise((resolve, reject) => {
+        loadingPage("show");
+        google.script.run
+          .withSuccessHandler(({ result, dataset }) => {
+            loadingPage("hide");
+            if (result.message === "success") {
+              refreshToken(result.jsonWebToken);
+              SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
+              this.render(dataset);
+              resolve(dataset); // Resolve with the dataset
+            } else {
+              reject(new Error("ไม่สามารถอัพเดทข้อมูลได้")); // Reject with an error
+              logout();
+            }
+          })
+          .getWeighingData10s({
+            url: this.searchUrl(this.currentListname),
+            jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+          });
+      });
     }
 
     // จบการผลิต
     endOfProduction() {
       loadingEdit("show");
-      setTimeout(
-        function () {
+      this.url = this.searchUrl(this.currentListname);
+
+      google.script.run
+        .withSuccessHandler(({ result, urlCreatePDF }) => {
           loadingEdit("hide");
-          SwalAlert.fire({
-            text: "จัดเก็บเอกสารการผลิตเรียบร้อยแล้ว",
-          }).then(this.loadWeighingData.bind(this));
-        }.bind(this),
-        2500
-      );
+          if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
+            SwalAlert.fire({
+              text: "จัดเก็บเอกสารการผลิตเรียบร้อยแล้ว",
+            }).then(() => {
+              this.loadWeighingData()
+                .then(() => {
+                  SwalMiniAlert.fire({
+                    icon: "info",
+                    title: "กำลังสร้างไฟล์ PDF.....",
+                    timer: 100000,
+                  });
+
+                  google.script.run
+                    .withSuccessHandler(({ result }) => {
+                      this.updateProductionLists();
+                      SwalMiniAlert.fire({ title: "ดำเนินการเรียบร้อยแล้ว" });
+                    })
+                    .createPdf10s({
+                      url: urlCreatePDF,
+                      jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+                    });
+                })
+                .catch((error) => {
+                  console.error("เกิดข้อผิดพลาด:", error);
+                });
+            });
+          } else {
+            logout();
+          }
+        })
+        .endOfProduction10s({
+          url: this.url,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // ลงชื่อตรวจสอบการตั้งค่า
@@ -526,16 +564,14 @@
       const url = this.searchUrl(this.currentListname);
       google.script.run
         .withSuccessHandler(({ result, dataset }) => {
+          loadingEdit("hide");
           if (result.message === "success") {
-            loadingEdit("hide");
+            refreshToken(result.jsonWebToken);
             SwalAlert.fire({
               text: "ลงชื่อตรวจสอบการตั้งค่าเรียบร้อยแล้ว",
             }).then(this.loadWeighingData.bind(this));
           } else {
-            SwalAlert.fire({
-              title: "ไม่สามารถอัพเดทข้อมูลได้",
-              text: "กรุณาลองไม่อีกครั้ง",
-            });
+            logout();
           }
         })
         .signInToCheckTheSettings10s({
@@ -556,6 +592,7 @@
           .withSuccessHandler(({ result, inspectorName }) => {
             loadingEdit("hide");
             if (result.message === "success") {
+              refreshToken(result.jsonWebToken);
               rowData[8] = inspectorName; // ลงชื่อผู้ตรวจสอบ
               SwalMiniAlert.fire({ title: "ลงชื่อผู้ตรวจสอบเรียบร้อยแล้ว" });
               const node = this.weighingTable
@@ -567,10 +604,7 @@
               $(node).hide();
               $(node).fadeIn(1500);
             } else {
-              SwalMiniAlert.fire({
-                title: "เกิดข้อผิดพลาด",
-                text: "กรุณาลองไหม่อีกครั้ง",
-              });
+              logout();
             }
           })
           .signInToCheckTheWeighingData({
@@ -601,6 +635,7 @@
         .withSuccessHandler(({ result, details }) => {
           loadingEdit("hide");
           if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
             SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
             this.formRemarks.modal.hide();
 
@@ -631,10 +666,7 @@
             $(node).fadeIn(1500);
             this.formRemarks.form.reset();
           } else {
-            SwalAlert.fire({
-              title: "ไม่สามารถอัพเดทข้อมูลได้",
-              text: "กรุณาลองไม่อีกครั้ง",
-            });
+            logout();
           }
         })
         .recordRemarksData({
@@ -673,98 +705,99 @@
       }
 
       this.renderSettingsDetails10s();
-      this.renderChart();
-      this.renderWeightTable();
-      this.container.appendChild(document.createElement("hr"));
-      this.renderThicknessTable();
-      this.container.appendChild(document.createElement("hr"));
-      this.renderRemarksTable();
+      if (this.productName != "xxxxx") {
+        this.renderChart();
+        this.renderWeightTable();
+        this.container.appendChild(document.createElement("hr"));
+        this.renderThicknessTable();
+        this.container.appendChild(document.createElement("hr"));
+        this.renderRemarksTable();
+      }
+
       this.main_container.appendChild(this.container);
+      $(this.buttonUpdate).click(this.loadWeighingData.bind(this)); // เพิ่ม event ปุ่มอัพเดทข้อมูล
+      $(this.container).fadeIn(1500); // แสดงข้อมูลชั่งน้ำหนัก
 
-      // เพิ่ม event ปุ่มอัพเดทข้อมูล
-      $(this.buttonUpdate).click(this.loadWeighingData.bind(this));
-
-      // เพิ่ม event ปุ่มจบการผลิต
-      $(this.buttonFinished).click(() => {
-        // ตรวจสอบข้อมูล Remarks
-        let rowsData = this.remarksTable.rows().data();
-        let checkRemarksState = true;
-        rowsData.each(function (rowData, index) {
-          const cause = rowData[2];
-          const resolve = rowData[3];
-          if (cause == "" || resolve == "") {
-            SwalPopup.fire({
-              title: "กรุณากรอกข้อมูลให้ครบถ้วน",
-              text: "ลงข้อมูล Remarks ให้ครบถ้วนก่อนจบการผลิต",
-              showConfirmButton: false,
-              cancelButtonText: "ปิด",
-            });
-            checkRemarksState = false;
-            return false;
-          }
-        });
-
-        if (checkRemarksState) {
-          SwalPopup.fire({
-            title: "ยืนยันการจัดเก็บเอกสาร",
-            text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
-            icon: "warning",
-            confirmButtonText: "ยืนยัน, จบการผลิต",
-          }).then((res) => {
-            if (res.isConfirmed) {
-              this.endOfProduction();
+      if (this.productName != "xxxxx") {
+        // เพิ่ม event ปุ่มจบการผลิต
+        $(this.buttonFinished).click(() => {
+          // ตรวจสอบข้อมูล Remarks
+          let rowsData = this.remarksTable.rows().data();
+          let checkRemarksState = true;
+          rowsData.each(function (rowData, index) {
+            const cause = rowData[2];
+            const resolve = rowData[3];
+            if (cause == "" || resolve == "") {
+              SwalPopup.fire({
+                title: "กรุณากรอกข้อมูลให้ครบถ้วน",
+                text: "ลงข้อมูล Remarks ให้ครบถ้วนก่อนจบการผลิต",
+                showConfirmButton: false,
+                cancelButtonText: "ปิด",
+              });
+              checkRemarksState = false;
+              return false;
             }
           });
-        }
-      });
 
-      // เพิ่ม event ปุ่มลงชื่อตรวจสอบการตั้งค่า
-      $(this.buttonApproved).click(this._signInToCheckTheSettings.bind(this));
-
-      // เพิ่ม event ปุ่มลงชื่อผู้ตรวจสอบ
-      $(this.addCheckerButton).click(() => {
-        SwalPopup.fire({
-          title: "ลงชื่อตรวจสอบข้อูล",
-          text: "ตรวจสอบความถูกต้องของข้อมูลการชั่งน้ำหนักเรียบร้อยแล้ว",
-          icon: "warning",
-          confirmButtonText: "ยืนยัน",
-        }).then((res) => {
-          if (res.isConfirmed) {
-            this._signInToCheckTheWeighingData();
+          if (checkRemarksState) {
+            SwalPopup.fire({
+              title: "ยืนยันการจัดเก็บเอกสาร",
+              text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
+              icon: "warning",
+              confirmButtonText: "ยืนยัน, จบการผลิต",
+            }).then((res) => {
+              if (res.isConfirmed) {
+                this.endOfProduction();
+              }
+            });
           }
         });
-      });
 
-      // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
-      $(this.addRemarksButton).click(() => {
-        this.formRemarks.createForm();
-      });
+        // เพิ่ม event ปุ่มลงชื่อตรวจสอบการตั้งค่า
+        $(this.buttonApproved).click(this._signInToCheckTheSettings.bind(this));
 
-      // แสดงข้อมูลชั่งน้ำหนัก
-      $(this.container).fadeIn(1500);
-
-      // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
-      if (
-        (this.role === role_definition.Admin ||
-          this.role === role_definition.Superuser) &&
-        this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
-      ) {
-        $(document).ready(() => {
-          $(this.remarks_tbody).on(
-            "click",
-            "tr",
-            function (e) {
-              const row = e.currentTarget._DT_RowIndex;
-              const data = this.remarksTable.row(row).data();
-              this.formRemarks.createForm({ rowIndex: row, dataRow: data });
-            }.bind(this)
-          );
-
-          $(this.formRemarks.form).submit((e)=> {
-              e.preventDefault();
-              this.onSubmitFormRemarks();
+        // เพิ่ม event ปุ่มลงชื่อผู้ตรวจสอบ
+        $(this.addCheckerButton).click(() => {
+          SwalPopup.fire({
+            title: "ลงชื่อตรวจสอบข้อูล",
+            text: "ตรวจสอบความถูกต้องของข้อมูลการชั่งน้ำหนักเรียบร้อยแล้ว",
+            icon: "warning",
+            confirmButtonText: "ยืนยัน",
+          }).then((res) => {
+            if (res.isConfirmed) {
+              this._signInToCheckTheWeighingData();
+            }
           });
         });
+
+        // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
+        $(this.addRemarksButton).click(() => {
+          this.formRemarks.createForm();
+        });
+
+        // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
+        if (
+          (this.role === roleDefinition.Admin ||
+            this.role === roleDefinition.Superuser) &&
+          this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
+        ) {
+          $(document).ready(() => {
+            $(this.remarks_tbody).on(
+              "click",
+              "tr",
+              function (e) {
+                const row = e.currentTarget._DT_RowIndex;
+                const data = this.remarksTable.row(row).data();
+                this.formRemarks.createForm({ rowIndex: row, dataRow: data });
+              }.bind(this)
+            );
+
+            $(this.formRemarks.form).submit((e) => {
+              e.preventDefault();
+              this.onSubmitFormRemarks();
+            });
+          });
+        }
       }
     }
 
@@ -817,8 +850,8 @@
 
       // ปุ่มจบการผลิต
       if (
-        (this.role === role_definition.Admin ||
-          this.role === role_definition.Superuser) &&
+        (this.role === roleDefinition.Admin ||
+          this.role === roleDefinition.Superuser) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1 &&
         this.productName !== "xxxxx"
       ) {
@@ -856,35 +889,55 @@
       details_ul.appendChild(tabletID_li);
 
       const meanWeight_li = document.createElement("li");
-      meanWeight_li.textContent = `น้ำหนักตามทฤษฎี 10 เม็ด ${parseFloat(
-        this.meanWeight
-      ).toFixed(3)} กรัม`;
+      const meanWeight =
+        this.meanWeight == "xxxxx"
+          ? this.meanWeight
+          : parseFloat(this.meanWeight).toFixed(3);
+      meanWeight_li.textContent = `น้ำหนักตามทฤษฎี 10 เม็ด ${meanWeight} กรัม`;
       details_ul.appendChild(meanWeight_li);
 
       const percentWeightVariation_li = document.createElement("li");
-      percentWeightVariation_li.textContent = `% ช่วงน้ำหนักเบี่ยงเบนที่ยอมรับ ${parseFloat(
-        this.percentWeightVariation
-      ).toFixed(2)}`;
+      const percentWeightVariation =
+        this.percentWeightVariation == "xxxxx"
+          ? this.percentWeightVariation
+          : parseFloat(this.percentWeightVariation).toFixed(2);
+      percentWeightVariation_li.textContent = `% ช่วงน้ำหนักเบี่ยงเบนที่ยอมรับ ${percentWeightVariation}`;
       details_ul.appendChild(percentWeightVariation_li);
 
       const meanWeightRange_li = document.createElement("li");
-      meanWeightRange_li.textContent = `ช่วงน้ำหนัก 10 เม็ด ${parseFloat(
-        this.meanWeightMin
-      ).toFixed(3)} - ${parseFloat(this.meanWeightMax).toFixed(3)} กรัม`;
+      const meanWeightMin =
+        this.meanWeightMin == "xxxxx"
+          ? this.meanWeightMin
+          : parseFloat(this.meanWeightMin).toFixed(3);
+      const meanWeightMax =
+        this.meanWeightMax == "xxxxx"
+          ? this.meanWeightMax
+          : parseFloat(this.meanWeightMax).toFixed(3);
+      meanWeightRange_li.textContent = `ช่วงน้ำหนัก 10 เม็ด ${meanWeightMin} - ${meanWeightMax} กรัม`;
       details_ul.appendChild(meanWeightRange_li);
 
       const meanWeightRegRange_li = document.createElement("li");
-      meanWeightRegRange_li.textContent = `ช่วงน้ำหนักเบี่ยงเบนที่กฎหมายยอมรับ ${parseFloat(
-        this.meanWeightRegMin
-      ).toFixed(3)} - ${parseFloat(this.meanWeightRegMax).toFixed(3)} กรัม`;
+      const meanWeightRegMin =
+        this.meanWeightRegMin == "xxxxx"
+          ? this.meanWeightRegMin
+          : parseFloat(this.meanWeightRegMin).toFixed(3);
+      const meanWeightRegMax =
+        this.meanWeightRegMax == "xxxxx"
+          ? this.meanWeightRegMax
+          : parseFloat(this.meanWeightRegMax).toFixed(3);
+      meanWeightRegRange_li.textContent = `ช่วงน้ำหนักเบี่ยงเบนที่กฎหมายยอมรับ ${meanWeightRegMin} - ${meanWeightRegMax} กรัม`;
       details_ul.appendChild(meanWeightRegRange_li);
 
       const thicknessRange_li = document.createElement("li");
-      thicknessRange_li.textContent = `ค่าความหนา(Thickness) ${parseFloat(
-        this.thicknessMin
-      ).toFixed(2)} - ${parseFloat(this.thicknessMax).toFixed(
-        2
-      )} มิลลิเมตร(mm)`;
+      const thicknessMin =
+        this.thicknessMin == "xxxxx"
+          ? this.thicknessMin
+          : parseFloat(this.thicknessMin).toFixed(2);
+      const thicknessMax =
+        this.thicknessMax == "xxxxx"
+          ? this.thicknessMax
+          : parseFloat(this.thicknessMax).toFixed(2);
+      thicknessRange_li.textContent = `ค่าความหนา(Thickness) ${thicknessMin} - ${thicknessMax} มิลลิเมตร(mm)`;
       details_ul.appendChild(thicknessRange_li);
 
       const prepared_approved_li = document.createElement("li");
@@ -910,7 +963,7 @@
       container.appendChild(detail_container);
 
       // ปุ่มลงชื่อตรวจสอบการตั้งค่า
-      if (this.role === role_definition.Admin) {
+      if (this.role === roleDefinition.Admin) {
         if (this.approved === "xxxxx" && this.productName !== "xxxxx") {
           const approved_button_div = document.createElement("div");
           approved_button_div.classList.add("d-flex", "justify-content-center");
@@ -986,15 +1039,19 @@
         });
       });
 
-      const weight_min = Math.min(...weights); // หาค่าน้ำหนักต่ำสุดที่อยู่ในช่วง
-      const weight_max = Math.max(...weights); // หาค่าน้ำหนักสูงสุดที่อยู่ในช่วง
+      const weight_min = weights.length > 0 ? Math.min(...weights) : 0; // หาค่าน้ำหนักต่ำสุดที่อยู่ในช่วง
+      const weight_max = weights.length > 0 ? Math.max(...weights) : 0; // หาค่าน้ำหนักสูงสุดที่อยู่ในช่วง
       const weight_average =
-        weights.reduce((a, b) => a + b, 0) / weights.length; // หาค่าเฉลี่ยน้ำหนัก
+        weights.length > 0
+          ? weights.reduce((a, b) => a + b, 0) / weights.length
+          : 0; // หาค่าเฉลี่ยน้ำหนัก
 
-      const thickness_min = Math.min(...thickness); // หาค่าความหนาต่ำสุดที่อยู่ในช่วง
-      const thickness_max = Math.max(...thickness); // หาค่าความหนาสูงสุดที่อยู่ในช่วง
+      const thickness_min = thickness.length > 0 ? Math.min(...thickness) : 0; // หาค่าความหนาต่ำสุดที่อยู่ในช่วง
+      const thickness_max = thickness.length > 0 ? Math.max(...thickness) : 0; // หาค่าความหนาสูงสุดที่อยู่ในช่วง
       const thickness_average =
-        thickness.reduce((a, b) => a + b, 0) / thickness.length; // หาค่าเฉลี่ยความหนา
+        thickness.length > 0
+          ? thickness.reduce((a, b) => a + b, 0) / thickness.length
+          : 0; // หาค่าเฉลี่ยความหนา
 
       const container = document.createElement("div");
       const summary_container = document.createElement("div");
@@ -1095,9 +1152,9 @@
       // เพิ่มปุ่มลงชื่อตรวจสอบข้อมูลน้ำหนักยา
       thead.classList.add("weight10s-checker");
       if (
-        (this.role === role_definition.Admin ||
-          this.role === role_definition.Superuser ||
-          this.role === role_definition.Inspector) &&
+        (this.role === roleDefinition.Admin ||
+          this.role === roleDefinition.Superuser ||
+          this.role === roleDefinition.Inspector) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addCheckerButton = document.createElement("button");
@@ -1155,10 +1212,7 @@
             cell.appendChild(div);
           } else if (key === "average") {
             const div = document.createElement("div");
-            const average =
-              weights_cache.reduce((a, b) => parseFloat(a) + parseFloat(b)) /
-              weights_cache.length;
-            const average_val = parseFloat(average).toFixed(3) || "";
+            const average_val = parseFloat(data).toFixed(3) || "";
             div.classList.add(
               "data-control-10s",
               "average-control",
@@ -1169,11 +1223,7 @@
           } else if (key === "percent") {
             const div = document.createElement("div");
             div.classList.add("data-control-10s");
-            const average =
-              weights_cache.reduce((a, b) => parseFloat(a) + parseFloat(b)) /
-              weights_cache.length;
-            const percent = (average / this.meanWeight) * 100;
-            div.textContent = parseFloat(percent).toFixed(2) || "";
+            div.textContent = parseFloat(data).toFixed(2) || "";
             const span = document.createElement("span");
             span.textContent = "%";
             div.appendChild(span);
@@ -1377,8 +1427,8 @@
 
       // เพิ่มข้อมูล remarks
       if (
-        (this.role === role_definition.Admin ||
-          this.role === role_definition.Superuser) &&
+        (this.role === roleDefinition.Admin ||
+          this.role === roleDefinition.Superuser) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addRemarksButton = document.createElement("button");
@@ -1440,6 +1490,7 @@
       this.listsMenu = new CreateViewWeighingMenu("weighingIpcList");
       this.viewWeighingMenu = this.listsMenu.container;
       this.listsMenuInput = this.listsMenu.input;
+      this.listsMenuOpenFile = this.listsMenu.openFile;
       this.main_container.appendChild(this.viewWeighingMenu);
 
       this.productionLists = []; // รายการผลิตทั้งหมด
@@ -1448,8 +1499,8 @@
 
       // สร้างฟอร์มสำหรับบันทึกข้อมูล Remarks
       if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
+        this.role === roleDefinition.Admin ||
+        this.role === roleDefinition.Superuser
       ) {
         this.formRemarks = new FormRemarksModal(
           `${this.containerId}_form`,
@@ -1464,10 +1515,29 @@
       });
 
       if (result) {
+        if (result.pdf) {
+          this.listsMenuOpenFile.href = result.pdf;
+        } else {
+          this.listsMenuOpenFile.removeAttribute("href");
+        }
         return result.url;
       } else {
         return null;
       }
+    }
+
+    updateProductionLists() {
+      google.script.run
+        .withSuccessHandler(({ result, productionLists }) => {
+          loadingData("hide");
+          if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
+            this.createProductionLists(productionLists);
+          } else {
+            logout();
+          }
+        })
+        .getProductionListsIPC(localStorage.getItem(storageKey.jsonWebToken));
     }
 
     createProductionLists(productionLists) {
@@ -1501,38 +1571,71 @@
 
     // โหลดข้อมูลการชั่งน้ำหนัก
     loadWeighingData() {
-      loadingPage("show");
-
-      this.url = this.searchUrl(this.currentListname);
-
-      google.script.run
-        .withSuccessHandler(({ result, dataset }) => {
-          loadingPage("hide");
-          if (result.message === "success") {
-            SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
-            this.render(dataset);
-          } else {
-            SwalMiniAlert.fire({ title: "ไม่สามารถอัพเดทข้อมูลได้" });
-          }
-        })
-        .getWeighingDataIPC(
-          localStorage.getItem(storageKey.jsonWebToken),
-          this.url
-        );
+      return new Promise((resolve, reject) => {
+        loadingPage("show");
+        google.script.run
+          .withSuccessHandler(({ result, dataset }) => {
+            loadingPage("hide");
+            if (result.message === "success") {
+              refreshToken(result.jsonWebToken);
+              SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
+              this.render(dataset);
+              resolve(dataset); // Resolve with the dataset
+            } else {
+              reject(new Error("ไม่สามารถอัพเดทข้อมูลได้")); // Reject with an error
+              logout();
+            }
+          })
+          .getWeighingDataIPC({
+            url: this.searchUrl(this.currentListname),
+            jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+          });
+      });
     }
 
     // จบการผลิต
     endOfProduction() {
       loadingEdit("show");
-      setTimeout(
-        function () {
+      this.url = this.searchUrl(this.currentListname);
+
+      google.script.run
+        .withSuccessHandler(({ result, urlCreatePDF }) => {
           loadingEdit("hide");
-          SwalAlert.fire({
-            text: "จัดเก็บเอกสารการผลิตเรียบร้อยแล้ว",
-          }).then(this.loadWeighingData.bind(this));
-        }.bind(this),
-        2500
-      );
+          if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
+            SwalAlert.fire({
+              text: "จัดเก็บเอกสารการผลิตเรียบร้อยแล้ว",
+            })
+              .then(() => {
+                this.loadWeighingData().then(() => {
+                  SwalMiniAlert.fire({
+                    icon: "info",
+                    title: "กำลังสร้างไฟล์ PDF.....",
+                    timer: 100000,
+                  });
+
+                  google.script.run
+                    .withSuccessHandler(({ result }) => {
+                      this.updateProductionLists();
+                      SwalMiniAlert.fire({ title: "ดำเนินการเรียบร้อยแล้ว" });
+                    })
+                    .createPdfIPC({
+                      url: urlCreatePDF,
+                      jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+                    });
+                });
+              })
+              .catch((error) => {
+                console.error("เกิดข้อผิดพลาด:", error);
+              });
+          } else {
+            logout();
+          }
+        })
+        .endOfProductionIPC({
+          url: this.url,
+          jwtToken: localStorage.getItem(storageKey.jsonWebToken),
+        });
     }
 
     // ลงชื่อตรวจสอบการตั้งค่า
@@ -1542,16 +1645,14 @@
       const url = this.searchUrl(this.currentListname);
       google.script.run
         .withSuccessHandler(({ result, dataset }) => {
+          loadingEdit("hide");
           if (result.message === "success") {
-            loadingEdit("hide");
+            refreshToken(result.jsonWebToken);
             SwalAlert.fire({
               text: "ลงชื่อตรวจสอบการตั้งค่าเรียบร้อยแล้ว",
             }).then(this.loadWeighingData.bind(this));
           } else {
-            SwalAlert.fire({
-              title: "ไม่สามารถอัพเดทข้อมูลได้",
-              text: "กรุณาลองไม่อีกครั้ง",
-            });
+            logout();
           }
         })
         .signInToCheckTheSettingsIPC({
@@ -1575,6 +1676,7 @@
         .withSuccessHandler(({ result, details }) => {
           loadingEdit("hide");
           if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
             SwalMiniAlert.fire({ title: "อัพเดทข้อมูลเรียบร้อยแล้ว" });
             this.formRemarks.modal.hide();
 
@@ -1605,10 +1707,7 @@
             $(node).fadeIn(1500);
             this.formRemarks.form.reset();
           } else {
-            SwalAlert.fire({
-              title: "ไม่สามารถอัพเดทข้อมูลได้",
-              text: "กรุณาลองไม่อีกครั้ง",
-            });
+            logout();
           }
         })
         .recordRemarksData({
@@ -1649,79 +1748,81 @@
       }
 
       this.renderSettingsDetailsIpc();
-      this.renderWeightTable();
-      this.renderRemarksTable();
+      if (this.productName != "xxxxx") {
+        this.renderWeightTable();
+        this.renderRemarksTable();
+      }
+
       this.main_container.appendChild(this.container);
+      $(this.container).fadeIn(1500); // แสดงข้อมูลชั่งน้ำหนัก
+      $(this.buttonUpdate).click(this.loadWeighingData.bind(this)); // เพิ่ม event ปุ่มอัพเดทข้อมูล
 
-      // เพิ่ม event ปุ่มอัพเดทข้อมูล
-      $(this.buttonUpdate).click(this.loadWeighingData.bind(this));
+      if (this.productName != "xxxxx") {
+        // เพิ่ม event ปุ่มจบการผลิต
+        $(this.buttonFinished).click(() => {
+          // ตรวจสอบข้อมูล Remarks
+          let rowsData = this.remarksTable.rows().data();
+          let checkRemarksState = true;
+          rowsData.each(function (rowData, index) {
+            const cause = rowData[2];
+            const resolve = rowData[3];
+            if (cause == "" || resolve == "") {
+              SwalPopup.fire({
+                title: "กรุณากรอกข้อมูลให้ครบถ้วน",
+                text: "ลงข้อมูล Remarks ให้ครบถ้วนก่อนจบการผลิต",
+                showConfirmButton: false,
+                cancelButtonText: "ปิด",
+              });
+              checkRemarksState = false;
+              return false;
+            }
+          });
 
-      // เพิ่ม event ปุ่มจบการผลิต
-      $(this.buttonFinished).click(() => {
-        // ตรวจสอบข้อมูล Remarks
-        let rowsData = this.remarksTable.rows().data();
-        let checkRemarksState = true;
-        rowsData.each(function (rowData, index) {
-          const cause = rowData[2];
-          const resolve = rowData[3];
-          if (cause == "" || resolve == "") {
+          if (checkRemarksState) {
             SwalPopup.fire({
-              title: "กรุณากรอกข้อมูลให้ครบถ้วน",
-              text: "ลงข้อมูล Remarks ให้ครบถ้วนก่อนจบการผลิต",
-              showConfirmButton: false,
-              cancelButtonText: "ปิด",
+              title: "ยืนยันการจัดเก็บเอกสาร",
+              text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
+              icon: "warning",
+              confirmButtonText: "ยืนยัน, จบการผลิต",
+            }).then((res) => {
+              if (res.isConfirmed) {
+                this.endOfProduction();
+              }
             });
-            checkRemarksState = false;
-            return false;
           }
         });
 
-        if (checkRemarksState) {
-          SwalPopup.fire({
-            title: "ยืนยันการจัดเก็บเอกสาร",
-            text: "คุณต้องการจบการผลิตและจัดเก็บเอกสารใช่หรือไม่?",
-            icon: "warning",
-            confirmButtonText: "ยืนยัน, จบการผลิต",
-          }).then((res) => {
-            if (res.isConfirmed) {
-              this.endOfProduction();
-            }
-          });
-        }
-      });
+        // เพิ่ม event ปุ่มลงชื่อตรวจสอบการตั้งค่า
+        $(this.buttonApproved).click(this._signInToCheckTheSettings.bind(this));
 
-      // เพิ่ม event ปุ่มลงชื่อตรวจสอบการตั้งค่า
-      $(this.buttonApproved).click(this._signInToCheckTheSettings.bind(this));
+        // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
+        $(this.addRemarksButton).click(() => {
+          this.formRemarks.createForm();
+        });
 
-      // แสดงข้อมูลชั่งน้ำหนัก
-      $(this.container).fadeIn(1500);
+        // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
+        if (
+          (this.role === roleDefinition.Admin ||
+            this.role === roleDefinition.Superuser) &&
+          this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
+        ) {
+          $(document).ready(() => {
+            $(this.remarks_tbody).on(
+              "click",
+              "tr",
+              function (e) {
+                const row = e.currentTarget._DT_RowIndex;
+                const data = this.remarksTable.row(row).data();
+                this.formRemarks.createForm({ rowIndex: row, dataRow: data });
+              }.bind(this)
+            );
 
-      // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
-      $(this.addRemarksButton).click(() => {
-        this.formRemarks.createForm();
-      });
-
-      // เพิ่ม event ปุ่มลงบันทึกข้อมูล remarks
-      if (
-        this.role === role_definition.Admin ||
-        this.role === role_definition.Superuser
-      ) {
-        $(document).ready(() => {
-          $(this.remarks_tbody).on(
-            "click",
-            "tr",
-            function (e) {
-              const row = e.currentTarget._DT_RowIndex;
-              const data = this.remarksTable.row(row).data();
-              this.formRemarks.createForm({ rowIndex: row, dataRow: data });
-            }.bind(this)
-          );
-
-          $(this.formRemarks.form).submit((e)=> {
+            $(this.formRemarks.form).submit((e) => {
               e.preventDefault();
               this.onSubmitFormRemarks();
+            });
           });
-        });
+        }
       }
     }
 
@@ -1774,8 +1875,8 @@
 
       // ปุ่มจบการผลิต
       if (
-        (this.role === role_definition.Admin ||
-          this.role === role_definition.Superuser) &&
+        (this.role === roleDefinition.Admin ||
+          this.role === roleDefinition.Superuser) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1 &&
         this.productName !== "xxxxx"
       ) {
@@ -1863,7 +1964,7 @@
       container.appendChild(detail_container);
 
       // ปุ่มลงชื่อตรวจสอบการตั้งค่า
-      if (this.role === role_definition.Admin) {
+      if (this.role === roleDefinition.Admin) {
         if (this.approved === "xxxxx" && this.productName !== "xxxxx") {
           const approved_button_div = document.createElement("div");
           approved_button_div.classList.add("d-flex", "justify-content-center");
@@ -1900,10 +2001,12 @@
         });
       });
 
-      const weight_min = Math.min(...weights); // หาค่าน้ำหนักต่ำสุดที่อยู่ในช่วง
-      const weight_max = Math.max(...weights); // หาค่าน้ำหนักสูงสุดที่อยู่ในช่วง
+      const weight_min = weights.length > 0 ? Math.min(...weights) : 0; // หาค่าน้ำหนักต่ำสุดที่อยู่ในช่วง
+      const weight_max = weights.length > 0 ? Math.max(...weights) : 0; // หาค่าน้ำหนักสูงสุดที่อยู่ในช่วง
       const weight_average =
-        weights.reduce((a, b) => a + b, 0) / weights.length; // หาค่าเฉลี่ยน้ำหนัก
+        weights.length > 0
+          ? weights.reduce((a, b) => a + b, 0) / weights.length
+          : 0; // หาค่าเฉลี่ยน้ำหนัก
 
       const container = document.createElement("div");
       const summary_container = document.createElement("div");
@@ -2218,8 +2321,8 @@
 
       // เพิ่มข้อมูล remarks
       if (
-        (this.role === role_definition.Admin ||
-          this.role === role_definition.Superuser) &&
+        (this.role === roleDefinition.Admin ||
+          this.role === roleDefinition.Superuser) &&
         this.currentListname.indexOf("(LOT. ปัจจุบัน)") > -1
       ) {
         this.addRemarksButton = document.createElement("button");
@@ -2376,10 +2479,10 @@
         .withSuccessHandler(({ result }) => {
           loadingEdit("hide");
           if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
             this.setupForm.reset();
             SwalAlert.fire({ text: "ตั้งค่าน้ำหนักยาเรียบร้อยแล้ว" });
           } else {
-            localStorage.clear();
             logout();
           }
         })
@@ -2404,13 +2507,13 @@
         .withSuccessHandler(({ result, productLists }) => {
           loadingEdit("hide");
           if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
             this.editForm.reset();
             this.createDropdownProductList(productLists);
             SwalAlert.fire({
               text: "เพิ่ม, แก้ไขฐานข้อมูลน้ำหนักยาเรียบร้อยแล้ว",
             });
           } else {
-            localStorage.clear();
             logout();
           }
         })
@@ -2868,22 +2971,17 @@
 
     // ค้นหาข้อมูลผู้ใช้จากฐานข้อมูลในระบบ
     searchUserData(usernameTH, userDataLists) {
-      const results = Object.entries(userDataLists).find(([rfid, data]) => {
+      const results = userDataLists.find((data) => {
         return usernameTH == data.usernameTH;
       });
 
       if (results) {
-        const [rfid, data] = results;
         const elements = $(this.container).find(
           "input:not([name='password']), select:not([name='usernameList'])"
         );
         elements.each((index, element) => {
           const el = $(element);
-          if (index == 0) {
-            el.val(rfid);
-          } else {
-            el.val(data[$(element).attr("name")]);
-          }
+          el.val(results[$(element).attr("name")]);
         });
       }
     }
@@ -2896,8 +2994,7 @@
         .withSuccessHandler(({ result, userDataLists }) => {
           this.userDataLists = userDataLists;
           if (result.message === "success") {
-            localStorage.setItem(storageKey.jsonWebToken, result.jsonWebToken);
-
+            refreshToken(result.jsonWebToken);
             element.disabled = false;
             element.innerHTML = "";
             const _options = document.createElement("option");
@@ -2905,7 +3002,7 @@
             _options.innerText = "รายชื่อพนักงาน...";
             element.appendChild(_options);
 
-            Object.entries(this.userDataLists).forEach(([rfid, data]) => {
+            this.userDataLists.forEach((data) => {
               const options = document.createElement("option");
               options.value = data.usernameTH;
               options.innerText = data.usernameTH;
@@ -2916,7 +3013,6 @@
               this.searchUserData(event.target.value, this.userDataLists);
             });
           } else {
-            console.log(result.message);
             logout();
           }
         })
@@ -3014,13 +3110,13 @@
         .withSuccessHandler(({ result }) => {
           loadingEdit("hide");
           if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
             this.form.reset();
             this.createDropdownList();
             SwalAlert.fire({
               text: "เพิ่ม, แก้ไขข้อมูล ผู้ใช้งานเรียบร้อยแล้ว",
             });
           } else {
-            localStorage.clear();
             logout();
           }
         })
@@ -3045,11 +3141,11 @@
         .withSuccessHandler(({ result }) => {
           loadingTrash("hide");
           if (result.message === "success") {
+            refreshToken(result.jsonWebToken);
             this.form.reset();
             this.createDropdownList();
             SwalAlert.fire({ text: "ลบข้อมูล! ออกจากระบบเรียบร้อยแล้ว" });
           } else {
-            localStorage.clear();
             logout();
           }
         })
@@ -3239,11 +3335,10 @@
         .withSuccessHandler(({ result, dataset }) => {
           loadingPage("hide");
           if (result.message === "success") {
-            localStorage.setItem(storageKey.jsonWebToken, result.jsonWebToken);
-
+            refreshToken(result.jsonWebToken);
             this.render(dataset);
           } else {
-            console.log(result.message);
+            logout();
           }
         })
         .getAuditTrailData(localStorage.getItem(storageKey.jsonWebToken));
