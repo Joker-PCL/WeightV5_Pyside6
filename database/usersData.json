@@ -1,0 +1,275 @@
+[
+    {
+        "rfid": "1514075799",
+        "employeeId": "2077",
+        "usernameTH": "ณัฐพล",
+        "usernameEN": "Nattapon",
+        "role": "Admin"
+    },
+    {
+        "rfid": "0006670026",
+        "employeeId": "3521",
+        "usernameTH": "ฉัตรพร",
+        "usernameEN": "Chatporn",
+        "role": "Admin"
+    },
+    {
+        "rfid": "0006600666",
+        "employeeId": "3871",
+        "usernameTH": "สิริยาภรณ์",
+        "usernameEN": "Siriyaporn",
+        "role": "Admin"
+    },
+    {
+        "rfid": "1514075577",
+        "employeeId": "3385",
+        "usernameTH": "ชิตชนก",
+        "usernameEN": "Chitchanok",
+        "role": "Superuser"
+    },
+    {
+        "rfid": "0003781035",
+        "employeeId": "3517",
+        "usernameTH": "สำลี",
+        "usernameEN": "Samlee",
+        "role": "Superuser"
+    },
+    {
+        "rfid": "0006621993",
+        "employeeId": "3668",
+        "usernameTH": "ณัฐกานต์",
+        "usernameEN": "Natthakarn",
+        "role": "Operator"
+    },
+    {
+        "rfid": "1514102360",
+        "employeeId": "3384",
+        "usernameTH": "ประภัสสร",
+        "usernameEN": "Prapatsorn",
+        "role": "Operator"
+    },
+    {
+        "rfid": "1514096941",
+        "employeeId": "3381",
+        "usernameTH": "อรทัย",
+        "usernameEN": "Orathai",
+        "role": "Superuser"
+    },
+    {
+        "rfid": "0006593978",
+        "employeeId": "3678",
+        "usernameTH": "อนุสรณ์",
+        "usernameEN": "Anusorn",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006662810",
+        "employeeId": "3696",
+        "usernameTH": "กรรณิการ์",
+        "usernameEN": "Kannika",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006667270",
+        "employeeId": "3781",
+        "usernameTH": "สุนันท์",
+        "usernameEN": "Sunan",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006663059",
+        "employeeId": "3853",
+        "usernameTH": "เอวลิน",
+        "usernameEN": "Evelyn",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006676619",
+        "employeeId": "3782",
+        "usernameTH": "สะกุณา",
+        "usernameEN": "Sakuna",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0005186406",
+        "employeeId": "3923",
+        "usernameTH": "อมีนา",
+        "usernameEN": "Amena",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006677476",
+        "employeeId": "3826",
+        "usernameTH": "สุระกรณ์",
+        "usernameEN": "Surakorn",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006663152",
+        "employeeId": "3872",
+        "usernameTH": "กัญญาวีย์",
+        "usernameEN": "Kanyawee",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006669994",
+        "employeeId": "3926",
+        "usernameTH": "ชลิตา",
+        "usernameEN": "Chalita",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006671160",
+        "employeeId": "3927",
+        "usernameTH": "กาญจนาพร",
+        "usernameEN": "Kanjanaporn",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006666282",
+        "employeeId": "3925",
+        "usernameTH": "อริษา",
+        "usernameEN": "Alisa",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006674961",
+        "employeeId": "3800",
+        "usernameTH": "ศศิกาญจน์",
+        "usernameEN": "Sasikarn",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0007293217",
+        "employeeId": "4026",
+        "usernameTH": "สุนิษา",
+        "usernameEN": "Sunisa ",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0007303102",
+        "employeeId": "4027",
+        "usernameTH": "สุภาสินี",
+        "usernameEN": "Supasinee",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0007309121",
+        "employeeId": "3926",
+        "usernameTH": "ชลิตา",
+        "usernameEN": "Charita",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0007296392",
+        "employeeId": "1111",
+        "usernameTH": "สำรอง 1",
+        "usernameEN": "Alternate 1",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0007293218",
+        "employeeId": "5555",
+        "usernameTH": "สำรอง 5",
+        "usernameEN": "Alternate 5",
+        "role": "Operator"
+    },
+    {
+        "rfid": "3473473470",
+        "employeeId": "347",
+        "usernameTH": "ชัชฎาภรณ์",
+        "usernameEN": "Chatchadaporn",
+        "role": "Superuser"
+    },
+    {
+        "rfid": "000000",
+        "employeeId": "1330",
+        "usernameTH": "พิมพ์พร",
+        "usernameEN": "Pimporn",
+        "role": "Inspector"
+    },
+    {
+        "rfid": "0007275420",
+        "employeeId": "3998",
+        "usernameTH": "วิยะดา",
+        "usernameEN": "Wiyada",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0007273752",
+        "employeeId": "3995",
+        "usernameTH": "ชณายุทธ",
+        "usernameEN": "Chanayut",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006674800",
+        "employeeId": "3939",
+        "usernameTH": "สโรชา",
+        "usernameEN": "Sarocha",
+        "role": "Admin"
+    },
+    {
+        "rfid": "1514088142",
+        "employeeId": "3137",
+        "usernameTH": "ธีรภัทร",
+        "usernameEN": "Teerapat",
+        "role": "Admin"
+    },
+    {
+        "rfid": "0007308834",
+        "employeeId": "3385",
+        "usernameTH": "ชิตชนก",
+        "usernameEN": "Chitchanok ",
+        "role": "Operator"
+    },
+    {
+        "rfid": "1514100775",
+        "employeeId": "3365",
+        "usernameTH": "วันทนีย์",
+        "usernameEN": "Wantanee",
+        "role": "Operator"
+    },
+    {
+        "rfid": "5000000000",
+        "employeeId": "2372",
+        "usernameTH": "พัชรา",
+        "usernameEN": "Phatchara",
+        "role": "Inspector"
+    },
+    {
+        "rfid": "5000000001",
+        "employeeId": "3662",
+        "usernameTH": "แก้วมณี",
+        "usernameEN": "Kaewmanee",
+        "role": "Inspector"
+    },
+    {
+        "rfid": "5000000002",
+        "employeeId": "2538",
+        "usernameTH": "แพรวนภา",
+        "usernameEN": "Paewnapra",
+        "role": "Inspector"
+    },
+    {
+        "rfid": "000729392",
+        "employeeId": "3781",
+        "usernameTH": "สุนันท์",
+        "usernameEN": "Sunan",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0007296391",
+        "employeeId": "3348",
+        "usernameTH": "ไพลิน",
+        "usernameEN": "Phailin",
+        "role": "Operator"
+    },
+    {
+        "rfid": "0006676620",
+        "employeeId": "3782",
+        "usernameTH": "สะกุณา",
+        "usernameEN": "Sakuna",
+        "role": "Operator"
+    }
+]

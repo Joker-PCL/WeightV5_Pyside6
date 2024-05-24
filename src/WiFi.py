@@ -6,12 +6,92 @@ import re
 import json
 import time
 
-from PySide6.QtGui import QPixmap, QIcon, QFont
-from PySide6.QtCore import QSize, Qt, QTimer, QUrl
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QTimer, QThread, Signal
 
-class WiFi():
+class GetWiFi(QThread):
+    get = Signal()
+
+    def __init__(self, os_name):
+        super().__init__()
+        self.os_name = os_name
+
+    def run(self):
+        print("Running...")
+        while True:
+            if self.os_name == "Windows":
+                try:
+                    output1 = subprocess.check_output('netsh wlan show interfaces').decode("utf-8")
+                    ssid_match = re.search(r'SSID\s+: (.+)', output1)
+                    if ssid_match:
+                        ssid = ssid_match.group(1)
+                    else:
+                        ssid = "N/A"
+                    
+                    signal_match = re.search(r'Signal\s+: (.+)%', output1)
+                    if signal_match:
+                        signal = signal_match.group(1)
+                    else:
+                        signal = "N/A"
+
+                    output_ping = subprocess.check_output('ping google.com -n 1').decode("utf-8")
+                    ping_match = re.search(r'Average = (.+?)ms', output_ping)
+                    if ping_match:
+                        ping = ping_match.group(1)
+                    else:
+                        ping = "N/A"
+                    
+                    self.wifi_info(ssid, signal, ping)
+                    
+                except subprocess.CalledProcessError:
+                    print("Error fetching WiFi information.")
+                    self.wifi_info()
+                
+            elif self.os_name == "Linux":
+                try:
+                    # ใช้ iwlist เพื่อดึงข้อมูลเกี่ยวกับเครือข่าย WiFi
+                    output1 = subprocess.check_output(['iwlist', 'wlan0', 'scan']).decode("utf-8")
+                    ssid_match = re.search(r'ESSID:"(.+)"', output1)
+                    if ssid_match:
+                        ssid = ssid_match.group(1)
+                    else:
+                        ssid = "N/A"
+                    
+                    signal_match = re.search(r'Signal level=(-\d+) dBm', output1)
+                    if signal_match:
+                        signal = signal_match.group(1)
+                    else:
+                        signal = "N/A"
+
+                    output_ping = subprocess.check_output(['ping', '-c', '1', 'google.com']).decode("utf-8")
+                    ping_match = re.search(r'time=(\d+\.?\d*) ms', output_ping)
+                    if ping_match:
+                        ping = int(float(ping_match.group(1)))
+                    else:
+                        ping = "N/A"
+
+                    self.wifi_info(ssid, signal, ping)
+                    
+                except subprocess.CalledProcessError:
+                    print("Error fetching WiFi information.")
+                    self.wifi_info
+            
+            time.sleep(0.5)
+
+    def wifi_info(self, ssid="N/A", signal="N/A", ping="N/A"):
+        self.ssid = ssid
+        self.signal = signal
+        self.ping = ping
+        self.get.emit()
+
+class WiFi(QThread):
+    """ การเชื่อมต่อไวไฟ """
     def __init__(self, window, os_name="Windows"):
-        self.window = window
+        super().__init__()
+        self.signalWidget1 = window.wifi_signal
+        self.signalWidget2 = window.wifi_signal_2
+        self.ssidWidget = window.ssid
+        self.pingWidget2 = window.ping
         self.os_name = os_name
         self.ssid = ""
         self.password = ""
@@ -27,74 +107,43 @@ class WiFi():
         self.signal2_icon = os.path.join(self.ICON_DIR, 'signal2.png')
         self.signal3_icon = os.path.join(self.ICON_DIR, 'signal3.png')
         self.signal4_icon = os.path.join(self.ICON_DIR, 'signal4.png')
+        self.no_internet_icon = os.path.join(self.ICON_DIR, 'no_internet.png')
 
-    def get_current_wifi(self):
-        if self.os_name == "Windows":
-            try:
-                out = subprocess.check_output('netsh wlan show interfaces').decode("utf-8")
-                ssid_match = re.search(r'SSID\s+: (.+)', out)
-                if ssid_match:
-                    ssid = ssid_match.group(1)
-                else:
-                    ssid = "N/A"
-                
-                signal_match = re.search(r'Signal\s+: (.+)%', out)
-                if signal_match:
-                    signal = signal_match.group(1)
-                else:
-                    signal = "N/A"
-                
-                return WiFiInfo(ssid, signal)
-                
-            except subprocess.CalledProcessError:
-                print("Error fetching WiFi information.")
-                return WiFiInfo()
-            
-        elif self.os_name == "Linux":
-            try:
-                # ใช้ iwlist เพื่อดึงข้อมูลเกี่ยวกับเครือข่าย WiFi
-                out = subprocess.check_output(['iwlist', 'wlan0', 'scan']).decode("utf-8")
-                
-                ssid_match = re.search(r'ESSID:"(.+)"', out)
-                if ssid_match:
-                    ssid = ssid_match.group(1)
-                else:
-                    ssid = "N/A"
-                
-                signal_match = re.search(r'Signal level=(-\d+) dBm', out)
-                if signal_match:
-                    signal = signal_match.group(1)
-                else:
-                    signal = "N/A"
-                
-                return WiFiInfo(ssid, signal)
-                
-            except subprocess.CalledProcessError:
-                print("Error fetching WiFi information.")
-                return WiFiInfo()
+        self.getWiFi = GetWiFi(self.os_name)
 
+    getWiFiResult = Signal()
     def signal_icon(self):
-        self.current_wifl = self.get_current_wifi()
-        self.signal = self.current_wifl.signal
+        self.current_wifi = self.getWiFi
+        self.getWiFiResult.emit()
+        self.ssid = self.current_wifi.ssid
+        self.signal = self.current_wifi.signal
+        self.ping = self.current_wifi.ping
 
-        if self.signal == "N/A":
-            self.window.wifi_signal.setPixmap(QPixmap(self.noSignal_icon))
+        if self.ssid == "N/A":
+            signal = self.noSignal_icon
+        elif self.ping == "N/A":
+            signal = self.no_internet_icon
+        elif self.signal == "N/A":
+            signal = self.noSignal_icon
         elif int(self.signal) <= 25 :
-            self.window.wifi_signal.setPixmap(QPixmap(self.signal1_icon))
+            signal = self.signal1_icon
         elif int(self.signal) <= 50 :
-            self.window.wifi_signal.setPixmap(QPixmap(self.signal2_icon))
+            signal = self.signal2_icon
         elif int(self.signal) <= 75 :
-            self.window.wifi_signal.setPixmap(QPixmap(self.signal3_icon))
+            signal = self.signal3_icon
         else:
-            self.window.wifi_signal.setPixmap(QPixmap(self.signal4_icon))
+            signal = self.signal4_icon
+            
+        self.signalWidget1.setPixmap(QPixmap(signal))
+        self.signalWidget2.setPixmap(QPixmap(signal))
+        self.ssidWidget.setText(f"SSID: {self.ssid}")
+        self.pingWidget2.setText(f"Ping: {self.ping} ms")
 
     def show_signal_icon(self):
         print("Active Wifi")
-        self.timer = QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.signal_icon)
-        self.timer.start()
-
+        self.getWiFi.get.connect(self.signal_icon)
+        self.getWiFi.start()
+        
     def scan_wifi_networks(self):
         iface = self.wifi.interfaces()[0]
 
@@ -141,8 +190,3 @@ class WiFi():
         else:
             print("Connection failed.")
             return self.DISCONNECTED
-
-class WiFiInfo:
-    def __init__(self, ssid="N/A", signal="N/A"):
-        self.ssid = ssid
-        self.signal = signal

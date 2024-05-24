@@ -1,0 +1,23 @@
+{
+    "Operator": "สิริยาภรณ์",
+    "Timestamp": "24/05/2024, 08:20:53",
+    "Type": "ONLINE",
+    "Weight": {
+        "average": 1.55,
+        "weight1": 1.5,
+        "weight2": 1.6
+    },
+    "Thickness": {
+        "number_1": "-",
+        "number_10": "-",
+        "number_2": "-",
+        "number_3": "-",
+        "number_4": "-",
+        "number_5": "-",
+        "number_6": "-",
+        "number_7": "-",
+        "number_8": "-",
+        "number_9": "-"
+    },
+    "Characteristics": "ปกติ"
+}

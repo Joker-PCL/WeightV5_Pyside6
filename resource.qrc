@@ -1,5 +1,30 @@
 <RCC>
   <qresource>
+    <file>assets/icon/machine.png</file>
+    <file>assets/icon/no_internet.png</file>
+    <file>assets/icon/characteristics.png</file>
+    <file>assets/icon/developer.png</file>
+    <file>assets/icon/exit.png</file>
+    <file>assets/icon/home.png</file>
+    <file>assets/icon/logout.png</file>
+    <file>assets/icon/manual_1.png</file>
+    <file>assets/icon/menu.png</file>
+    <file>assets/icon/menu_open.png</file>
+    <file>assets/icon/no-wifi.png</file>
+    <file>assets/icon/picture_default.png</file>
+    <file>assets/icon/power-on.png</file>
+    <file>assets/icon/restart.png</file>
+    <file>assets/icon/restart1.png</file>
+    <file>assets/icon/settings.png</file>
+    <file>assets/icon/shutdown1.png</file>
+    <file>assets/icon/shutdown2.png</file>
+    <file>assets/icon/signal1.png</file>
+    <file>assets/icon/signal2.png</file>
+    <file>assets/icon/signal3.png</file>
+    <file>assets/icon/signal4.png</file>
+    <file>assets/icon/summary.png</file>
+    <file>assets/icon/thickness.png</file>
+    <file>assets/icon/weighing.png</file>
     <file>assets/icon/no-wifi.png</file>
     <file>assets/icon/signal1.png</file>
     <file>assets/icon/signal2.png</file>
