@@ -1718,3 +1718,6 @@ Invalid value at 'data.values[15]' (type.googleapis.com/google.protobuf.ListValu
 06-06-2024 06:16:13 DEBUG: URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1CP7r6TBxu_5HTqhE4mJ4-CPn_0XaxhET1pPp0WxTtRY/values/TabletID%21A2%3AE?alt=json
 06-06-2024 06:16:14 INFO: file_cache is only supported with oauth2client<4.0.0
 06-06-2024 06:16:14 DEBUG: URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1CP7r6TBxu_5HTqhE4mJ4-CPn_0XaxhET1pPp0WxTtRY/values/User%21A3%3AF?alt=json
+06-06-2024 06:17:55 INFO: login: RFID 1514075799 DETAIL {'usernameTH': 'ณัฐพล', 'role': 'Admin'}
+06-06-2024 06:17:56 INFO: file_cache is only supported with oauth2client<4.0.0
+06-06-2024 06:17:57 DEBUG: URL being requested: GET https://sheets.googleapis.com/v4/spreadsheets/1XySGAC8aaywquHFKwr_zBBDpOgj99CF15UHe3P3kYF8/values/Setting%21B2%3AB17?alt=json
