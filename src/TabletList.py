@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QPushButton, QGroupBox, QVBoxLayout
-from PySide6.QtCore import QCoreApplication, Qt, QSize
-from PySide6.QtGui import QMovie, QFont, QCursor, QIcon
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QFont, QCursor, QIcon
 
 class TabletList():
     def __init__(self, window, settingsFile, tabletID):
@@ -16,7 +16,7 @@ class TabletList():
         font3.setFamilies([u"Kanit"])
         font3.setPointSize(11)
 
-        self.qbox = QGroupBox(self.window.scrollAreaWidgetContents)
+        self.qbox = QGroupBox(self.window.tabletListContents)
         self.qbox.setObjectName(f"QBoxTablet{tabletID}")
         self.qbox.setFont(font2)
         self.qbox.setAlignment(Qt.AlignCenter)

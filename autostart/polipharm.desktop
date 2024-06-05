@@ -1,0 +1,4 @@
+[Desktop Entry]
+Type = Application
+Name = polipharm
+Exec =/usr/bin/lxterminal -e /home/pi/Desktop/polipharm/main.sh

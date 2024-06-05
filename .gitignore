@@ -1,1 +1,7 @@
 node_modules/
+env/
+dist/
+build/
+main.spec
+SARAN.mp4
+SARAN1.mp4

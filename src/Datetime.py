@@ -14,9 +14,6 @@ class ShowDateTime():
         self.timer.timeout.connect(self.print)
         self.timer.start()
 
-    def stop(self):
-        self.timer.stop()
-
     def print(self):
         now = datetime.now()  # current date and time
         curr_date = now.strftime("%d/%m/%Y")

@@ -2,13 +2,16 @@ import json
 import pickle
 import os.path
 import requests
+import logging
+
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient import errors
 
+_LOGGER = logging.getLogger(__name__)
 
-class Server:
+class Server():
     def __init__(self, token=None, credentials=None):
         self.token = token
         self.creds = None
@@ -40,6 +43,7 @@ class Server:
 
         except Exception as error:
             print(error)
+            _LOGGER.error(error)
             return None
 
     def getData(self, spreadsheetId: str = None, range: str = None):
@@ -48,18 +52,44 @@ class Server:
         รับค่า spreadsheetId และ range มาเป็น string เพื่อใช้ในการอ่านข้อมูลจาก server
 
         """
-        self.spreadsheetId = spreadsheetId
-        self.range = range
         try:
             service = self.connect()
             result = (
                 service.spreadsheets()
                 .values()
-                .get(spreadsheetId=self.spreadsheetId, range=self.range)
+                .get(spreadsheetId=spreadsheetId, range=range)
                 .execute()
             )
             values = result.get("values", [])
             return values
         except Exception as error:
             print(error)
+            _LOGGER.error(error)
             return None
+
+    def sendData(self, spreadsheetId: str = None, range: str = None, data: object = None):
+        """
+        ส่งข้อมูลไปยัง server \n
+        รับค่า spreadsheetId และ range มาเป็น string
+        และ data มาเป็น object เพื่อใช้ในการส่งข้อมูลไปยัง server
+        """
+        try:
+            service = self.connect()
+            response = service.spreadsheets().values().append(
+                spreadsheetId=spreadsheetId,
+                range=range,
+                body={
+                    "majorDimension": "ROWS",
+                    "values": [data]
+                },
+                valueInputOption="USER_ENTERED"
+            ).execute()
+
+            print(f"{response} \n")
+
+            return True
+        
+        except Exception as e:
+            logging.error(f"sendData_sheets: {data} \n {e}")
+            print(f"\n<<Send data sheets error>> \n {e} \n")
+            return False

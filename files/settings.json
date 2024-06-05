@@ -2,10 +2,11 @@
     "Main": {
         "spreadsheetID": "1CP7r6TBxu_5HTqhE4mJ4-CPn_0XaxhET1pPp0WxTtRY",
         "userDataRange": "User!A3:F",
+        "weighingDataRange": "Weight!A3:S",
         "TabletListRange": "TabletID!A2:E",
         "settingDataRange": "Setting!B2:B17"
     },
-    "TabletID": "T03",
+    "TabletID": "T01",
     "TabletList": [
         {
             "tabletID": "T01",

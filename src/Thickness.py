@@ -1,4 +1,3 @@
-from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QThread, Signal, Slot
 from src.Alert import Alert
 
@@ -48,11 +47,7 @@ class Thickness(QThread):
         
         self.window.button_thickness_confirm.clicked.connect(lambda: self.thickness(True))
         self.window.button_thickness_cancel.clicked.connect(lambda: self.thickness(False))
-
-    def run(self):
-        print("Thickness is running...")
         
-    
     # Event ปุ่ม ยืนยัน และ ยกเลิก
     @Slot(dict)
     def thickness(self, selected):

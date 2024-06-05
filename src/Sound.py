@@ -1,11 +1,13 @@
 from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 import os
+# from playsound import playsound
 
 class PlaySound():
     def __init__(self, path):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
+        self.audio_output.setVolume(1)
         self.path = path
         self.sounds_files = [f for f in os.listdir(self.path) if os.path.isfile(os.path.join(self.path, f))]
         self.sound_index = 0
@@ -14,7 +16,7 @@ class PlaySound():
         self.timer = QTimer()
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.play_all)
-        self.timer.start() 
+        self.timer.start()
           
         if self.sounds_files and not self.player.isPlaying():
             _file = self.sounds_files[self.sound_index]
