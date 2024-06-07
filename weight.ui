@@ -56,6 +56,9 @@ QPushButton:checked {
 }</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_41">
+       <property name="spacing">
+        <number>20</number>
+       </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <property name="topMargin">
@@ -321,6 +324,9 @@ QPushButton:checked {
 }</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_42">
+       <property name="spacing">
+        <number>20</number>
+       </property>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <property name="topMargin">
@@ -541,7 +547,7 @@ QPushButton:checked {
          <property name="minimumSize">
           <size>
            <width>0</width>
-           <height>50</height>
+           <height>55</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -554,13 +560,13 @@ border-radius: 8px;</string>
            <number>10</number>
           </property>
           <property name="topMargin">
-           <number>0</number>
+           <number>5</number>
           </property>
           <property name="rightMargin">
            <number>10</number>
           </property>
           <property name="bottomMargin">
-           <number>0</number>
+           <number>5</number>
           </property>
           <item>
            <widget class="QFrame" name="frame_28">
@@ -818,7 +824,7 @@ QGroupBox {
 }</string>
          </property>
          <property name="currentIndex">
-          <number>6</number>
+          <number>7</number>
          </property>
          <widget class="QWidget" name="home_page">
           <layout class="QVBoxLayout" name="verticalLayout_15">
@@ -6647,10 +6653,16 @@ border-radius: 15px;</string>
               <enum>QFrame::Raised</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_39">
+              <property name="topMargin">
+               <number>5</number>
+              </property>
               <item>
                <widget class="QWidget" name="widget_3" native="true">
                 <layout class="QHBoxLayout" name="horizontalLayout_65">
                  <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
                   <number>0</number>
                  </property>
                  <property name="rightMargin">

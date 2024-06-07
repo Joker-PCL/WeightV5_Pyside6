@@ -11,19 +11,21 @@ from src.Sound import PlaySound
 from src.WiFi import WiFi
 from weight import Weight10s
 
-OS_NAME = "Windows"
+##################################### ตั้งค่า ######################################
+#################################################################################
+OS_NAME = "Windows" # ตั้งค่าระบบปฏิบัติการ
+BALANCE_PORT_WINDOWS = "COM6" # พอร์ต RS232 ** Windows("COM6")
+BALANCE_PORT_LINUX = "/dev/ttyUSB0" # พอร์ต RS232 ** Linux("/dev/ttyUSB0")
+#################################################################################
+#################################################################################
 
 if OS_NAME == "Windows":
     os.environ["QT_MEDIA_BACKEND"] = "windows"
-    os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
+    # os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
+    BALANCE_PORT = BALANCE_PORT_WINDOWS
 elif OS_NAME == "Linux":
     os.environ["QT_MEDIA_BACKEND"] = "gstreamer"
-
-# # ตั้งค่า QT_PLUGIN_PATH
-# plugin_path = os.path.join(
-#     os.path.dirname(sys.executable), "Lib", "site-packages", "PySide6", "plugins"
-# )
-# os.environ["QT_PLUGIN_PATH"] = plugin_path
+    BALANCE_PORT = BALANCE_PORT_LINUX
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STYLE = os.path.join(BASE_DIR, "style.qss")
@@ -45,7 +47,7 @@ def main():
     second_screen = screens[1]
 
     # สร้างหน้าต่างหลัก
-    window = Weight10s(TOKEN, CREDENTIALS, SETTINGS)
+    window = Weight10s(TOKEN, CREDENTIALS, SETTINGS, BALANCE_PORT)
     window.resize(1024, 600)
     window.move(0, 0)
     window.setWindowIcon(QIcon(ICON))

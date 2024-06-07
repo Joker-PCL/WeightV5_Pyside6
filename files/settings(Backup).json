@@ -1,0 +1,28 @@
+{
+    "Main": {
+        "spreadsheetID": "1CP7r6TBxu_5HTqhE4mJ4-CPn_0XaxhET1pPp0WxTtRY",
+        "userDataRange": "User!A3:F",
+        "weighingDataRange": "Weight!A3:S",
+        "TabletListRange": "TabletID!A2:E",
+        "settingDataRange": "Setting!B2:B17"
+    },
+    "TabletID": "T01",
+    "TabletList": [
+        {
+            "tabletID": "T01",
+            "spreadsheetID": "1XySGAC8aaywquHFKwr_zBBDpOgj99CF15UHe3P3kYF8"
+        },
+        {
+            "tabletID": "T02",
+            "spreadsheetID": "1AJg1K8aQgpbaInzQKd1cy-9hysr02JiIuGic2pLt9Bc"
+        },
+        {
+            "tabletID": "T04",
+            "spreadsheetID": "1VecUHiEccSf7Z9TqO-ECSk_q0rDmXC2FT5TjSQL8GcY"
+        },
+        {
+            "tabletID": "T03",
+            "spreadsheetID": "1BSigGruoj-TJYlSMcUOXti-cZWuJJDiMRyVWi5DxpYA"
+        }
+    ]
+}

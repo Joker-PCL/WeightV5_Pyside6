@@ -18,7 +18,6 @@ class GetWiFi(QThread):
         self.os_name = os_name
 
     def run(self):
-        print("Running...")
         while True:
             if self.os_name == "Windows":
                 try:

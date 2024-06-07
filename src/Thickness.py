@@ -34,6 +34,8 @@ class Thickness(QThread):
         self.thickness_alert_input = Alert(self.window.thickness_input_title)
         self.thickness_val_label = self.window.thickness_val_label
 
+        self.initial_text = self.window.thickness_val_1.text()
+        self.initial_style = self.window.thickness_val_1.styleSheet()
         self.window.thickness_val_1.clicked.connect(lambda: self.thickness_input(self.window.thickness_val_1))
         self.window.thickness_val_2.clicked.connect(lambda: self.thickness_input(self.window.thickness_val_2))
         self.window.thickness_val_3.clicked.connect(lambda: self.thickness_input(self.window.thickness_val_3))
@@ -76,7 +78,8 @@ class Thickness(QThread):
             for i in range(1, 11):
                 self.thicknessData[f"number_{i}"] = "-"
                 thickness_number = getattr(self.window, f"thickness_val_{i}")
-                thickness_number.setText("XX.XX")
+                thickness_number.setText(self.initial_text)
+                thickness_number.setStyleSheet(self.initial_style)
 
             self.get.emit(self.thicknessData)
 
@@ -100,6 +103,7 @@ class Thickness(QThread):
             if len(value):
                 try:
                     self.current_number.setText(f"{float(value):.2f}")
+                    self.thicknessOutoffRange(float(value))
                     self.window.switchToPage(self.window.thickness_page)
                     self.current_value = ""
                     self.window.thickness_val_input.setText("XX.XX")
@@ -121,4 +125,15 @@ class Thickness(QThread):
             if len(self.current_value) < self.max_range:
                 self.current_value += key
                 self.window.thickness_val_input.setText(self.current_value)
-                    
+
+    def thicknessOutoffRange(self, thickness):
+        widget = self.current_number
+        initial_text = widget.text()
+        initial_style = widget.styleSheet()
+        inRange_style = f"{initial_style} color: rgb(0, 170, 127);"
+        outOffRange_style = f"{initial_style} color: rgb(255, 17, 17);"
+
+        if thickness <= 1:
+            widget.setStyleSheet(inRange_style)
+        else:
+            widget.setStyleSheet(outOffRange_style)

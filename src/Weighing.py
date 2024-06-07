@@ -53,30 +53,34 @@ class Weighing(QThread):
         # currentWeight = str(random.uniform(0.155,0.165))
 
         while len(self.weighing) < 2:
-            # readSerial = self.serial.readline()
-            currentWeight = input("Weight: ")
-            # currentWeight = readSerial.decode("ascii", errors="ignore")
-            currentWeight = currentWeight.replace("?", "").strip().upper()
-            currentWeight = currentWeight.replace("G", "").strip()
-            currentWeight = currentWeight.replace("N", "").strip()
-            currentWeight = currentWeight.replace("S", "").strip()
-            currentWeight = currentWeight.replace("T,", "").strip()  # AND FX
-            currentWeight = currentWeight.replace("G", "").strip()  # AND FX
-            currentWeight = currentWeight.replace("+", "").strip()
-            weight = round(float(currentWeight), 3)
-            self.weighing.append(weight)
-            print(f"Weight{len(self.weighing)}: {weight:.3f}")
+            try:
+                # readSerial = self.serial.readline()
+                currentWeight = input("Weight: ")
+                # currentWeight = readSerial.decode("ascii", errors="ignore")
+                currentWeight = currentWeight.replace("?", "").strip().upper()
+                currentWeight = currentWeight.replace("G", "").strip()
+                currentWeight = currentWeight.replace("N", "").strip()
+                currentWeight = currentWeight.replace("S", "").strip()
+                currentWeight = currentWeight.replace("T,", "").strip()  # AND FX
+                currentWeight = currentWeight.replace("G", "").strip()  # AND FX
+                currentWeight = currentWeight.replace("+", "").strip()
+                weight = round(float(currentWeight), 3)
+                self.weighing.append(weight)
+                print(f"Weight{len(self.weighing)}: {weight:.3f}")
 
-            weighingData[f"weight{len(self.weighing)}"] = weight
+                weighingData[f"weight{len(self.weighing)}"] = weight
 
-            currentWidget = self.widget_weight[len(self.weighing) - 1]
-            self.weightOutOfRange(currentWidget, weight)
+                currentWidget = self.widget_weight[len(self.weighing) - 1]
+                self.weightOutOfRange(currentWidget, weight)
 
-            average = round(float(sum(self.weighing) / len(self.weighing)), 3)
-            weighingData["average"] = average
-            self.weightOutOfRange(self.widget_average, average)
+                average = round(float(sum(self.weighing) / len(self.weighing)), 3)
+                weighingData["average"] = average
+                self.weightOutOfRange(self.widget_average, average)
 
-            self.hidden.emit(True)
+                self.hidden.emit(True)
+            
+            except Exception as e:
+                continue
 
         # self.serial.close()
         self.get.emit(weighingData)

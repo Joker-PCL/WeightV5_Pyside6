@@ -58,6 +58,7 @@ class Ui_MainWindow(object):
 "	font-weight: bold;\n"
 "}")
         self.verticalLayout_41 = QVBoxLayout(self.show_sidebar)
+        self.verticalLayout_41.setSpacing(20)
         self.verticalLayout_41.setObjectName(u"verticalLayout_41")
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
@@ -208,6 +209,7 @@ class Ui_MainWindow(object):
 "	font-weight: bold;\n"
 "}")
         self.verticalLayout_42 = QVBoxLayout(self.hide_sidebar)
+        self.verticalLayout_42.setSpacing(20)
         self.verticalLayout_42.setObjectName(u"verticalLayout_42")
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
@@ -302,13 +304,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_5.setContentsMargins(9, 0, 9, 0)
         self.widget = QWidget(self.screen_page)
         self.widget.setObjectName(u"widget")
-        self.widget.setMinimumSize(QSize(0, 50))
+        self.widget.setMinimumSize(QSize(0, 55))
         self.widget.setStyleSheet(u"background-color: rgb(100, 100, 100);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 8px;")
         self.horizontalLayout = QHBoxLayout(self.widget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(10, 0, 10, 0)
+        self.horizontalLayout.setContentsMargins(10, 5, 10, 5)
         self.frame_28 = QFrame(self.widget)
         self.frame_28.setObjectName(u"frame_28")
         self.frame_28.setEnabled(True)
@@ -2788,11 +2790,12 @@ class Ui_MainWindow(object):
         self.frame_2.setFrameShadow(QFrame.Raised)
         self.verticalLayout_39 = QVBoxLayout(self.frame_2)
         self.verticalLayout_39.setObjectName(u"verticalLayout_39")
+        self.verticalLayout_39.setContentsMargins(-1, 5, -1, -1)
         self.widget_3 = QWidget(self.frame_2)
         self.widget_3.setObjectName(u"widget_3")
         self.horizontalLayout_65 = QHBoxLayout(self.widget_3)
         self.horizontalLayout_65.setObjectName(u"horizontalLayout_65")
-        self.horizontalLayout_65.setContentsMargins(0, -1, 0, -1)
+        self.horizontalLayout_65.setContentsMargins(0, 0, 0, -1)
         self.groupBox_6 = QGroupBox(self.widget_3)
         self.groupBox_6.setObjectName(u"groupBox_6")
         self.groupBox_6.setMaximumSize(QSize(16777215, 100))
@@ -3163,7 +3166,7 @@ class Ui_MainWindow(object):
         self.home_2.toggled.connect(self.home_1.setChecked)
         self.home_1.toggled.connect(self.home_2.setChecked)
 
-        self.stackedWidget.setCurrentIndex(6)
+        self.stackedWidget.setCurrentIndex(7)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
